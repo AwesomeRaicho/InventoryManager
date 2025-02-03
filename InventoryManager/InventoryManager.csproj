@@ -24,8 +24,4 @@
     <ProjectReference Include="..\InventoryManager.Infrastructure\InventoryManager.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>
