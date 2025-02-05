@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using InventoryManager.Core.Models;
 using InventoryManager.Core.DTO;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Reflection.Metadata.Ecma335;
 
 
 namespace InventoryManager.Controllers
@@ -25,10 +26,6 @@ namespace InventoryManager.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductCreateRequest productRequest)
         {
-            if (true)
-            {
-                await _productService.CreateProduct(productRequest);
-            }
             
 
             if (!ModelState.IsValid)
@@ -43,18 +40,32 @@ namespace InventoryManager.Controllers
                 return BadRequest(modelstate);
             }
 
-            
+            var created = await _productService.CreateProduct(productRequest);
+
+
 
             return Ok(productRequest);
         }
 
 
         //Read
-        [HttpGet]
-        public IActionResult Get([FromQuery] ProductGetRequest productGetRequest) 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByID(string id) 
         {
 
-            return Ok(productGetRequest);
+            if(string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException("Id cannot be null or empty", nameof(id));
+            }
+
+            var result = await _productService.GetById(id);
+
+            if(result == null)
+            {
+                return NotFound(new {Error = "Id provided does not match any existing products."});
+            }
+
+            return Ok(result);
         }
 
         //Update

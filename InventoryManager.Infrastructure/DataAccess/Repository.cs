@@ -91,15 +91,6 @@ namespace InventoryManager.Infrastructure.DataAccess
             return returns;
         }
 
-        public async Task<IEnumerable<T>> FindAll(IQueryable<T> query, int? pageIndex, int? pageSize, List<string> Fields)
-        {
-            int pageindex = pageIndex ?? 1;
-            int pagesize = pageSize ?? 1;
-
-
-            return await query.Skip((pageindex - 1) * pagesize).Take(pagesize).ToListAsync();
-        }
-
         public async Task<T?> GetEntityById(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -143,6 +134,18 @@ namespace InventoryManager.Infrastructure.DataAccess
         public IQueryable<T> GetQueryable()
         {
             return _dbContext.Set<T>();
+        }
+
+        public Task<T?> Find(Expression<Func<T, bool>> predicate, params Func<IQueryable<T>, IQueryable<T>>[] includes)
+        {
+            var query = _dbContext.Set<T>().Where(predicate);
+
+            foreach(var include in includes)
+            {
+                query = include(query);
+            }
+
+            return query.FirstOrDefaultAsync();
         }
     }
 

@@ -19,7 +19,8 @@ namespace InventoryManager.Core.DTO
         [Range(0, double.MaxValue, ErrorMessage = "Price must be a positive value.")]
         public decimal? Price { get; set; }
 
-        public Guid? ProductTypeId {  get; set; }   
+        public string? ProductTypeId {  get; set; }   
 
+        public string? ProductTypeName { get; set; }
     }
 }
