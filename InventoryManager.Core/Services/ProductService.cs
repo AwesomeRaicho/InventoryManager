@@ -88,6 +88,27 @@ namespace InventoryManager.Core.Services
             return true;
         }
 
+        public List<ProductResponse>? GetProductResponseList(List<Product> products)
+        {
+            if(products == null || products.Count <= 0)
+            {
+                return null;
+            }
+
+            return products.Select(p => new ProductResponse()
+            {
+                Id = p.Id,
+                Price = p.Price,
+                ProductName = p.ProductName,
+                ProductNumber = p.ProductNumber,
+                ProductTypeId = p.ProductTypeId.ToString(),
+                ConcurrencyStamp = p.ConcurrencyStamp,
+                ProductTypeName = p.ProductType?.Name ?? string.Empty,
+                StockAmount = p.StockAmount
+            }).ToList();
+
+
+        }
 
         public async Task<ProductResponse?> GetById(string id)
         {
@@ -112,7 +133,40 @@ namespace InventoryManager.Core.Services
 
 
         }
- 
 
+        public async Task<List<ProductResponse>?> GetAllProducts(ProductGetRequest productGetRequest)
+        {
+            if(productGetRequest == null)
+            {
+                throw new ArgumentException("¨ProductGetRequest cannot be null.");
+            };
+
+            var query = _productRepository.GetQueryable();
+
+            if(productGetRequest.ProductId != null && Guid.TryParse(productGetRequest.ProductId, out Guid requestId))
+            {
+                query = query.Where(e => e.Id == requestId);
+            };
+
+            if(!string.IsNullOrEmpty(productGetRequest.SearchText))
+            {
+                query = query.Where(e => (
+                e.ProductName != null && e.ProductName.Contains(productGetRequest.SearchText, StringComparison.OrdinalIgnoreCase)) || 
+                (e.ProductType != null && e.ProductType.Name != null && e.ProductType.Name.Contains(productGetRequest.SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (e.ProductNumber != null && e.ProductNumber.Contains(productGetRequest.SearchText, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            var products = (List<Product>)await _productRepository.FindAll(query, productGetRequest.PageNumber, productGetRequest.PageSize);
+
+            if(products.Count <= 0)
+            {
+                return null;
+            }
+
+
+
+            return this.GetProductResponseList(products);
+
+        }
     }
 }

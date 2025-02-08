@@ -68,6 +68,16 @@ namespace InventoryManager.Controllers
             return Ok(result);
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll(ProductGetRequest productGetRequest)
+        {
+
+
+            return Ok();
+
+        }
+       
+
         //Update
 
 

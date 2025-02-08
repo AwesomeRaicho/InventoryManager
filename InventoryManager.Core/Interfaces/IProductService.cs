@@ -12,5 +12,7 @@ namespace InventoryManager.Core.Interfaces
     {
         public Task<bool> CreateProduct(ProductCreateRequest productCreateRequest);
         public Task<ProductResponse?> GetById(string id);
+        public Task<List<ProductResponse>?> GetAllProducts(ProductGetRequest productGetRequest);
+
     }
 }

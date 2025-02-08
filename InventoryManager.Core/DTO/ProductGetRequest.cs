@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InventoryManager.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,17 +10,16 @@ namespace InventoryManager.Core.DTO
 {
     public class ProductGetRequest
     {
+        [StringLength(22, MinimumLength = 3)]
         public string? SearchText { get; set; }
-        
         public string? ProductId { get; set; }
+        public string? ProductType { get; set; }
+        public string? ProductTypeId { get; set;}
         
-        [StringLength(22, MinimumLength = 3)]
-        public string? ProductNumber { get; set; }
+        public int? PageNumber { get; set; } = 0;
         
-        [StringLength(22, MinimumLength = 3)]
-        public string? ProductName { get; set; }
-
-
-
+        [Range(20, 100)]
+        public int? PageSize { get; set;} = 0;
+        public OrderBy OrderBy { get; set; } = OrderBy.Desc;
     }
 }
