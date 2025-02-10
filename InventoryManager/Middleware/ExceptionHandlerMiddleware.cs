@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using InventoryManager.Core.Interfaces;
+using System.Text.Json;
 
 namespace InventoryManager.Middleware
 {
@@ -17,14 +18,14 @@ namespace InventoryManager.Middleware
             _exceptionHandling = exceptionHandling;
         }
 
-        public async Task Invoke(HttpContext httpContext)
+        public async Task Invoke(HttpContext httpContext, IWebHostEnvironment env)
         {
             try
             {
                 await _next(httpContext);
             }catch (Exception ex)
             {
-                await _exceptionHandling.HandleAsync(httpContext, ex);
+                await _exceptionHandling.HandleAsync(httpContext, ex, env);
             }
         }
     }

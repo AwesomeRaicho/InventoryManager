@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,8 @@ namespace InventoryManager.Core.Models
         public string? ProductName { get; set; }
         public decimal? Price { get; set; }
         public int StockAmount { get; set; } = 0;
-        public byte[]? ConcurrencyStamp { get; set; }
+        [Timestamp]
+        public byte[] ConcurrencyStamp { get; set; } = new byte[0];
 
         // Foreign Keys
         public Guid? ProductTypeId { get; set; }

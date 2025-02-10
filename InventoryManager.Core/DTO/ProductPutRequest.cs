@@ -1,25 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace InventoryManager.Core.DTO
 {
-    public class ProductCreateRequest
+    public class ProductPutRequest
     {
         [Required]
-        [StringLength(22, MinimumLength = 3)]
+        public string? Id { get; set; }
         public string? ProductNumber { get; set; }
-        [Required]
-        [StringLength(22, MinimumLength = 3)]
         public string? ProductName { get; set; }
-
-        [Range(0, double.MaxValue, ErrorMessage = "Price must be a positive value.")]
         public decimal? Price { get; set; }
+        [Required]
+        public byte[]? ConcurrencyStamp { get; set; }
 
-        public string? ProductTypeId {  get; set; }   
-
+        // Foreign Keys
+        public string? ProductTypeId { get; set; }
     }
 }

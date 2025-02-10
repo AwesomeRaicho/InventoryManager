@@ -69,18 +69,53 @@ namespace InventoryManager.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> GetAll(ProductGetRequest productGetRequest)
+        public async Task<IActionResult> GetAll([FromQuery] ProductGetRequest productGetRequest)
         {
 
+            var productResponses = await _productService.GetAllProducts(productGetRequest);
 
-            return Ok();
-
+            return Ok(productResponses);
         }
-       
+
 
         //Update
+        [HttpPut]
+        public async Task<IActionResult> Put(ProductPutRequest productPutRequest)
+        {
 
+            var updatedProduct = await _productService.UpdateProduct(productPutRequest);
+
+            if(updatedProduct.IsSuccess)
+            {
+                return Ok(new {updatedProduct.Value });
+            }
+            else
+            {
+                return BadRequest(new {updatedProduct.Error });
+            }
+
+        }
 
         //Delete
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            if(string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException("Id cannot be null when deleteing.", nameof(id));
+            }
+
+            var deleteProduct = await _productService.DeleteProduct(id);
+
+            if(deleteProduct.IsSuccess)
+            {
+                return Ok(new {deleteProduct.Value});
+            }
+            else
+            {
+                return BadRequest(new {deleteProduct.Error});
+            }
+
+        }
     }
 }

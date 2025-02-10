@@ -47,23 +47,17 @@ namespace InventoryManager.Infrastructure.DataAccess
                 throw new ArgumentNullException(nameof(id), "Id cannot be null when deleteing.");
             }
 
-            var entity = await _dbContext.Set<T>().FindAsync(id);
+            var entity = await _dbContext.Set<T>().FindAsync(Guid.Parse(id));
 
             if (entity == null)
             {
                 throw new InvalidOperationException("An error occurred when trying to delete entity.", new KeyNotFoundException("Data base returned null, entity does not exist."));
             }
-            try
-            {
-                _dbContext.Set<T>().Remove(entity);
-                await _dbContext.SaveChangesAsync();
-                return true;
 
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while trying to delete entity.", ex);
-            }
+            _dbContext.Set<T>().Remove(entity);
+            await _dbContext.SaveChangesAsync();
+            return true;
+
         }
 
         public async Task<T?> Find(Expression<Func<T, bool>> predicate)
@@ -84,7 +78,14 @@ namespace InventoryManager.Infrastructure.DataAccess
         }
         public async Task<IEnumerable<T>> FindAll(IQueryable<T> query, int? pageIndex, int? pageSize)
         {
-            int pageindex = pageIndex ?? 1;
+            if (query == null)
+            {
+                throw new Exception("[CE] Query to DB cannot be null.");
+            }
+
+
+
+            int pageindex = pageIndex == null || pageIndex == 0 ? 1 : (int)pageIndex;
             int pagesize = pageSize ?? 1;
             var returns = await query.Skip((pageindex - 1) * pagesize).Take(pagesize)
                 .ToListAsync();
@@ -116,19 +117,13 @@ namespace InventoryManager.Infrastructure.DataAccess
         {
             if (entity == null)
             {
-                throw new ArgumentNullException(nameof(entity), "Entity being eliminated cannot be null");
+                throw new ArgumentNullException(nameof(entity), "Entity being updated cannot be null");
             }
 
-            try
-            {
-                _dbContext.Set<T>().Update(entity);
-                await _dbContext.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error accourred while updating database", ex);
-            }
+            _dbContext.Set<T>().Update(entity);
+            await _dbContext.SaveChangesAsync(); 
+
+            return true;
         }
 
         public IQueryable<T> GetQueryable()

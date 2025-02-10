@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace InventoryManager.Core.Interfaces
 {
     public interface IExceptionHandling
     {
-        public Task HandleAsync(HttpContext context, Exception exception);
+        public Task HandleAsync(HttpContext context, Exception exception, IWebHostEnvironment env);
     }
 }
 
