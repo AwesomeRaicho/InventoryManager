@@ -28,5 +28,4 @@ namespace InventoryManager.Core.DTO
         public static Result<T> Success(T value) => new(value);
         public static Result<T> Failure(string error) => new(error);
     }
-
 }

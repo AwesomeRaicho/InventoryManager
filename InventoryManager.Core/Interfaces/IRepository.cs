@@ -18,5 +18,13 @@ namespace InventoryManager.Core.Interfaces
         public Task<bool> Update(T entity);
         public Task<bool> Delete(string id);
 
+        /// <summary>
+        /// Confirm if a value exists in a table already
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>return true if value can be added, return false if value already exists in the table.</returns>
+        public Task<bool> IsUnique(Expression<Func<T, bool>> predicate);
+
+        public Task AddRange(List<T> entities);
     }
 }
