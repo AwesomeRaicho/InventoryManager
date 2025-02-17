@@ -13,6 +13,7 @@ namespace InventoryManager.Core.DTO
         public string? Barcode { get; set; }
         public decimal? PurchasePrice { get; set; }
         public string? LocationId { get; set; }
+        public string? Status { get; set; }
 
         [Required]
         public string? ProductId { get; set; }

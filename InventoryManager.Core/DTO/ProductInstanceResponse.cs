@@ -10,8 +10,16 @@ namespace InventoryManager.Core.DTO
     {
         public string? Id { get; set; }
         public string? Barcode { get; set; }
-        public string? status { get; set; }
         public byte[]? ConcurrencyStamp { get; set; }
+        public string? LocationId { get; set; }
+        public string? LocationName { get; set; }
+        public string? ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public string? Status { get; set; }
+
+        public DateTime? EntryDate { get; set; }
+
+        //ADD PROPERTIES NAMES AND IDs
 
     }
 }

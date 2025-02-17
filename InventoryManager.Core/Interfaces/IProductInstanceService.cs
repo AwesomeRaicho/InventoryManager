@@ -10,5 +10,9 @@ namespace InventoryManager.Core.Interfaces
     public interface IProductInstanceService
     {
         public Task<Result<ProductInstanceResponse>> CreateProductInstance(ProductInstanceCreateRequest productInstanceCreateRequest);
+
+        public Task<Result<ProductInstanceResponse>> GetProductInstanceById(string? id);
+
+        public Task<Result<List<ProductInstanceResponse>>> GetAllProductInstances(ProductInstanceGetRequest productInstanceGetRequest);
     }
 }

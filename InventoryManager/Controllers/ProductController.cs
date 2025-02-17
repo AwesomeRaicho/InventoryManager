@@ -44,13 +44,13 @@ namespace InventoryManager.Controllers
 
 
 
-            return Ok(productRequest);
+            return Ok(created);
         }
 
 
         //Read
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetByID(string id) 
+        public async Task<IActionResult> GetByID( string id) 
         {
 
             if(string.IsNullOrEmpty(id))

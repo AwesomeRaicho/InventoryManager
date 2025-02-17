@@ -1,4 +1,5 @@
 ﻿using InventoryManager.Core.DTO;
+using InventoryManager.Core.Enums;
 using InventoryManager.Core.Interfaces;
 using InventoryManager.Core.Models;
 using Microsoft.AspNetCore.Http.Connections;
@@ -9,8 +10,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace InventoryManager.Core.Services
 {
@@ -32,11 +35,24 @@ namespace InventoryManager.Core.Services
             _propertyInstanceRepository = PropertyInstanceRepo;
         }
 
-        private ProductInstanceResponse GetResponseDTO(ProductInstance productinstance)
+        private ProductInstanceResponse? GetResponseDTO(ProductInstance productinstance)
         {
-            //NEED TO RETURN INTO A RESPONSE DTO
+            if(productinstance == null) { return null; };
 
-            return new ProductInstanceResponse();
+            var reponse = new ProductInstanceResponse()
+            {
+                Barcode = productinstance.Barcode,
+                ConcurrencyStamp = productinstance.ConcurrencyStamp,
+                Id = productinstance.Id.ToString(),
+                Status = productinstance.Status,
+                LocationId = productinstance.LocationId.ToString(),
+                LocationName = productinstance.Location != null ? productinstance.Location.Name : null,
+                ProductId = productinstance.ProductId.ToString(),
+                ProductName = productinstance.Product != null ? productinstance.Product.ProductName : null,
+                EntryDate = productinstance.EntryDate,
+            };
+
+            return reponse;
         }
 
         private async Task AddPropertiesToInstance(ProductInstance instanceEntity, List<string> propertyIds)
@@ -153,11 +169,10 @@ namespace InventoryManager.Core.Services
                 ProductId = parsedProductId,
                 EntryDate = DateTime.UtcNow,
                 PurchasePrice = productInstanceCreateRequest.PurchasePrice,
-                Status = "Available",
+                Status = productInstanceCreateRequest.Status,
                 LocationId = verifiedLocatioinId,
                     
             };
-
 
             var dbEntity = await _productInstanceRepository.Create(productInstance);
 
@@ -169,7 +184,137 @@ namespace InventoryManager.Core.Services
 
             var resDTO = this.GetResponseDTO(dbEntity);
 
-            return Result<ProductInstanceResponse>.Success(resDTO);
+            if(resDTO != null)
+            {
+                return Result<ProductInstanceResponse>.Success(resDTO);
+            }
+
+            return Result<ProductInstanceResponse>.Failure("Could not return created Product instance, please validate in all view.");
+
+        }
+
+        public async Task<Result<ProductInstanceResponse>> GetProductInstanceById(string? id)
+        {
+            if(string.IsNullOrEmpty(id))
+            {
+                return Result<ProductInstanceResponse>.Failure("Id cannot be null"); 
+            }
+
+            if(!Guid.TryParse(id, out Guid parsedId))
+            {
+                return Result<ProductInstanceResponse>.Failure($"{nameof(id)} is not valid");
+            }
+
+            var query = await _productInstanceRepository.GetQueryable().Where(x => x.Id == parsedId).Include(x => x.Product).FirstOrDefaultAsync();
+
+            if(query == null)
+            {
+                return Result<ProductInstanceResponse>.Failure($"Product was not found or matches any existing products.");
+            }
+
+            var responseEntity = this.GetResponseDTO(query);
+
+            if(responseEntity == null)
+            {
+                return Result<ProductInstanceResponse>.Failure("Could not create product response.");   
+            }
+
+            return Result<ProductInstanceResponse>.Success(responseEntity);
+
+        }
+
+        public async Task<Result<List<ProductInstanceResponse>>> GetAllProductInstances(ProductInstanceGetRequest productInstanceGetRequest)
+        {
+            if(productInstanceGetRequest == null)
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Get request cannot be null.");
+            }
+            var parseResult = Guid.TryParse(productInstanceGetRequest.ProductId, out Guid parsedProductId);
+            bool productExists = false;
+            if (!string.IsNullOrEmpty(productInstanceGetRequest.ProductId))
+            {
+                if(!parseResult)
+                {
+                    return Result<List<ProductInstanceResponse>>.Failure("Product id is not correct.");
+                }
+
+                var entity = await _productRepository.GetEntityById(productInstanceGetRequest.ProductId);
+
+                if(entity == null)
+                {
+                    return Result<List<ProductInstanceResponse>>.Failure("Product Id provided does not belong to an existing product.");
+                }
+
+                productExists = true;
+            }
+
+            //making sure page 1 will  be provided always
+            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber <= 1 || productInstanceGetRequest.PageNumber == null ? 0 : productInstanceGetRequest.PageNumber;
+
+            //keeping the page size between 20 and 1000
+            productInstanceGetRequest.PageSize = productInstanceGetRequest.PageSize == null ? 20 : productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 1000 ? 1000 : productInstanceGetRequest.PageSize;
+
+
+            //do Query
+            var query =  _productInstanceRepository.GetQueryable();
+
+            // Fugure out column order
+            if(productInstanceGetRequest.OrderBy == OrderBy.Desc)
+            {
+                if(productInstanceGetRequest.OrderByColumn == "status")
+                {
+                    query = query.OrderByDescending(x => x.Status);
+                }else
+                {
+                    query.OrderByDescending(e =>  e.EntryDate);
+                }
+
+            }else
+            {
+                if(productInstanceGetRequest.OrderByColumn == "status")
+                {
+                    query = query.OrderBy(x => x.Status);
+                }
+                else
+                {
+                    query.OrderBy(e => e.EntryDate);
+                }
+            }
+
+            //search parameters
+            if (productExists)
+            {
+                query = query.Where(e => e.Product != null && e.Product.ProductTypeId == parsedProductId);
+            }
+           
+            if(!string.IsNullOrEmpty(productInstanceGetRequest.SearchText))
+            {
+                query = query.Where(e => e.Barcode != null && e.Barcode.Contains(productInstanceGetRequest.SearchText) || e.Product != null && e.Product.ProductName != null && e.Product.ProductName.Contains(productInstanceGetRequest.SearchText));
+            }
+
+            var entities = await query.Skip((int)(productInstanceGetRequest.PageNumber * productInstanceGetRequest.PageSize)).Take((int)productInstanceGetRequest.PageSize).ToListAsync();
+
+            if (entities.Any())
+            {
+                var responses = entities.Where(e => e != null).Select(e => new ProductInstanceResponse()
+                {
+                    Barcode = e.Barcode,
+                    ConcurrencyStamp = e.ConcurrencyStamp,
+                    EntryDate = e.EntryDate,
+                    Id = e.Id.ToString(),
+                    LocationId = e.Id.ToString(),
+                    LocationName = e.Location != null ? e.Location.Name : null,
+                    ProductId = e.ProductId.ToString(),
+                    ProductName = e.Product != null ? e.Product.ProductName : null,
+                    Status = e.Status
+                }).ToList();
+
+
+                return Result<List<ProductInstanceResponse>>.Success(responses);
+            }else
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("No matching prodcuts found based on your search text or product Id");
+            }
         }
 
     }
