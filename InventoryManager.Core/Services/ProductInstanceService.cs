@@ -249,7 +249,7 @@ namespace InventoryManager.Core.Services
             }
 
             //making sure page 1 will  be provided always
-            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber < 1 || productInstanceGetRequest.PageNumber == null ? 1 : productInstanceGetRequest.PageNumber;
+            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber <= 1 || productInstanceGetRequest.PageNumber == null ? 0 : productInstanceGetRequest.PageNumber;
 
             //keeping the page size between 20 and 1000
             productInstanceGetRequest.PageSize = productInstanceGetRequest.PageSize == null ? 20 : productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 1000 ? 1000 : productInstanceGetRequest.PageSize;
@@ -259,38 +259,44 @@ namespace InventoryManager.Core.Services
             var query =  _productInstanceRepository.GetQueryable();
 
             // Fugure out column order
-            if (productInstanceGetRequest.OrderBy == OrderBy.Desc)
+            if(productInstanceGetRequest.OrderBy == OrderBy.Desc)
             {
-                query = productInstanceGetRequest.OrderByColumn == "status"
-                    ? query.OrderByDescending(x => x.Status)
-                    : query.OrderByDescending(e => e.EntryDate);
-            }
-            else
+                if(productInstanceGetRequest.OrderByColumn == "status")
+                {
+                    query = query.OrderByDescending(x => x.Status);
+                }else
+                {
+                    query = query.OrderByDescending(e =>  e.EntryDate);
+                }
+
+            }else
             {
-                query = productInstanceGetRequest.OrderByColumn == "status"
-                    ? query.OrderBy(x => x.Status)
-                    : query.OrderBy(e => e.EntryDate);
+                if(productInstanceGetRequest.OrderByColumn == "status")
+                {
+                    query = query.OrderBy(x => x.Status);
+                }
+                else
+                {
+                    query = query.OrderBy(e => e.EntryDate);
+                }
             }
 
             //search parameters
+
+
             if (productExists)
             {
                 query = query.Where(e => e.Product != null && e.Product.ProductTypeId == parsedProductId);
-            }
-           
-            if(!string.IsNullOrEmpty(productInstanceGetRequest.SearchText))
+            }else if(!string.IsNullOrEmpty(productInstanceGetRequest.SearchText))
             {
-                query = query.Where(e =>
-                    (!string.IsNullOrEmpty(e.Barcode) && e.Barcode.Contains(productInstanceGetRequest.SearchText)) ||
-                    (e.Product != null && !string.IsNullOrEmpty(e.Product.ProductName) && e.Product.ProductName.Contains(productInstanceGetRequest.SearchText))
-                );
+                query = query.Where(e => (e.Barcode != null && e.Barcode.Contains(productInstanceGetRequest.SearchText)) || (e.Product != null && e.Product.ProductName != null && e.Product.ProductName.Contains(productInstanceGetRequest.SearchText)));
             }
 
             var entities = await query.Skip((int)(productInstanceGetRequest.PageNumber * productInstanceGetRequest.PageSize)).Take((int)productInstanceGetRequest.PageSize).ToListAsync();
 
             if (entities.Any())
             {
-                var responses = entities.Where(e => e != null).Select(e => new ProductInstanceResponse()
+                var responses = entities.Select(e => new ProductInstanceResponse()
                 {
                     Barcode = e.Barcode,
                     ConcurrencyStamp = e.ConcurrencyStamp,
@@ -307,8 +313,12 @@ namespace InventoryManager.Core.Services
                 return Result<List<ProductInstanceResponse>>.Success(responses);
             }else
             {
-                return Result<List<ProductInstanceResponse>>.Failure("No matching prodcuts found based on your search text or product Id");
+                return Result<List<ProductInstanceResponse>>.Failure("No matching prodcuts found based on your search text or product Id"); 
             }
+                    
+
+
+
         }
 
     }
