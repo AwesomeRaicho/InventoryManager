@@ -249,7 +249,7 @@ namespace InventoryManager.Core.Services
             }
 
             //making sure page 1 will  be provided always
-            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber <= 1 || productInstanceGetRequest.PageNumber == null ? 0 : productInstanceGetRequest.PageNumber;
+            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber < 1 || productInstanceGetRequest.PageNumber == null ? 1 : productInstanceGetRequest.PageNumber;
 
             //keeping the page size between 20 and 1000
             productInstanceGetRequest.PageSize = productInstanceGetRequest.PageSize == null ? 20 : productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 1000 ? 1000 : productInstanceGetRequest.PageSize;
@@ -259,26 +259,17 @@ namespace InventoryManager.Core.Services
             var query =  _productInstanceRepository.GetQueryable();
 
             // Fugure out column order
-            if(productInstanceGetRequest.OrderBy == OrderBy.Desc)
+            if (productInstanceGetRequest.OrderBy == OrderBy.Desc)
             {
-                if(productInstanceGetRequest.OrderByColumn == "status")
-                {
-                    query = query.OrderByDescending(x => x.Status);
-                }else
-                {
-                    query.OrderByDescending(e =>  e.EntryDate);
-                }
-
-            }else
+                query = productInstanceGetRequest.OrderByColumn == "status"
+                    ? query.OrderByDescending(x => x.Status)
+                    : query.OrderByDescending(e => e.EntryDate);
+            }
+            else
             {
-                if(productInstanceGetRequest.OrderByColumn == "status")
-                {
-                    query = query.OrderBy(x => x.Status);
-                }
-                else
-                {
-                    query.OrderBy(e => e.EntryDate);
-                }
+                query = productInstanceGetRequest.OrderByColumn == "status"
+                    ? query.OrderBy(x => x.Status)
+                    : query.OrderBy(e => e.EntryDate);
             }
 
             //search parameters
@@ -289,7 +280,10 @@ namespace InventoryManager.Core.Services
            
             if(!string.IsNullOrEmpty(productInstanceGetRequest.SearchText))
             {
-                query = query.Where(e => e.Barcode != null && e.Barcode.Contains(productInstanceGetRequest.SearchText) || e.Product != null && e.Product.ProductName != null && e.Product.ProductName.Contains(productInstanceGetRequest.SearchText));
+                query = query.Where(e =>
+                    (!string.IsNullOrEmpty(e.Barcode) && e.Barcode.Contains(productInstanceGetRequest.SearchText)) ||
+                    (e.Product != null && !string.IsNullOrEmpty(e.Product.ProductName) && e.Product.ProductName.Contains(productInstanceGetRequest.SearchText))
+                );
             }
 
             var entities = await query.Skip((int)(productInstanceGetRequest.PageNumber * productInstanceGetRequest.PageSize)).Take((int)productInstanceGetRequest.PageSize).ToListAsync();
@@ -302,7 +296,7 @@ namespace InventoryManager.Core.Services
                     ConcurrencyStamp = e.ConcurrencyStamp,
                     EntryDate = e.EntryDate,
                     Id = e.Id.ToString(),
-                    LocationId = e.Id.ToString(),
+                    LocationId = e.LocationId.ToString(),
                     LocationName = e.Location != null ? e.Location.Name : null,
                     ProductId = e.ProductId.ToString(),
                     ProductName = e.Product != null ? e.Product.ProductName : null,
