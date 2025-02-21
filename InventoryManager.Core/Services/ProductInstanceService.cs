@@ -57,15 +57,14 @@ namespace InventoryManager.Core.Services
 
         private async Task AddPropertiesToInstance(ProductInstance instanceEntity, List<string> propertyIds)
         {
-
             if (instanceEntity == null)
                 throw new ArgumentNullException(nameof(instanceEntity));
 
-            // check the ProductInstance exists
+            // Check if the ProductInstance exists
             var entity = await _productInstanceRepository.Find(e => e.Id == instanceEntity.Id);
             if (entity == null) return;
 
-            // parsable strings IDs to Guid
+            // Parse string IDs to Guid
             var validIds = propertyIds
                 .Select(id => Guid.TryParse(id, out Guid parsedId) ? parsedId : Guid.Empty)
                 .Where(id => id != Guid.Empty)
@@ -73,25 +72,36 @@ namespace InventoryManager.Core.Services
 
             if (!validIds.Any()) return;
 
-            // Get only existing property IDs from DB
+            // Get only valid PropertyInstance IDs that exist in the DB
             var existingPropertyIds = await _propertyInstanceRepository
                 .GetQueryable()
-                .Where(e => validIds.Contains(e.Id))
+                .Where(e => validIds.Contains(e.Id))  // Filter to ensure properties exist
                 .Select(e => e.Id)
                 .ToListAsync();
 
             if (!existingPropertyIds.Any()) return;
 
-            // Get already existing relationships (avoid duplicates)
+            // Get all relationships for this specific ProductInstance
             var existingRelations = await _productInstance_PropertyRepository
                 .GetQueryable()
-                .Where(e => e.ProductInstanceId == entity.Id && existingPropertyIds.Contains(e.PropertyId))
-                .Select(e => e.PropertyId)
+                .Where(e => e.ProductInstanceId == entity.Id)
                 .ToListAsync();
 
-            // Create new relationships, filtering out existing ones
+            var existingPropertyIdsInDb = existingRelations.Select(r => r.PropertyId).ToList();
+
+            // Identify relationships to remove (those in the DB but NOT in the incoming list)
+            var relationsToRemove = existingRelations
+                .Where(rel => !existingPropertyIds.Contains(rel.PropertyId))
+                .ToList();
+
+            if (relationsToRemove.Any())
+            {
+                await _productInstance_PropertyRepository.RemoveRange(relationsToRemove);
+            }
+
+            // Identify new relationships to add (those in the incoming list but NOT in the DB)
             var newRelations = existingPropertyIds
-                .Except(existingRelations) 
+                .Except(existingPropertyIdsInDb)
                 .Select(propertyId => new ProductInstance_Property
                 {
                     ProductInstanceId = entity.Id,
@@ -104,6 +114,7 @@ namespace InventoryManager.Core.Services
                 await _productInstance_PropertyRepository.AddRange(newRelations);
             }
         }
+
 
 
         public async Task<Result<ProductInstanceResponse>> CreateProductInstance(ProductInstanceCreateRequest productInstanceCreateRequest)
@@ -283,11 +294,12 @@ namespace InventoryManager.Core.Services
 
             //search parameters
 
-
             if (productExists)
             {
                 query = query.Where(e => e.Product != null && e.Product.ProductTypeId == parsedProductId);
-            }else if(!string.IsNullOrEmpty(productInstanceGetRequest.SearchText))
+            }
+            
+            if(!string.IsNullOrEmpty(productInstanceGetRequest.SearchText))
             {
                 query = query.Where(e => (e.Barcode != null && e.Barcode.Contains(productInstanceGetRequest.SearchText)) || (e.Product != null && e.Product.ProductName != null && e.Product.ProductName.Contains(productInstanceGetRequest.SearchText)));
             }
@@ -309,16 +321,124 @@ namespace InventoryManager.Core.Services
                     Status = e.Status
                 }).ToList();
 
-
                 return Result<List<ProductInstanceResponse>>.Success(responses);
             }else
             {
                 return Result<List<ProductInstanceResponse>>.Failure("No matching prodcuts found based on your search text or product Id"); 
             }
-                    
+        }
 
+        public async Task<Result<ProductInstanceResponse>> UpdateProductInstance(ProductInstancePutRequest productInstancePutRequest)
+        {
+            if (productInstancePutRequest == null)
+            {
+                return Result<ProductInstanceResponse>.Failure("Put Request cannot be null."); 
+            }
 
+            if(string.IsNullOrEmpty(productInstancePutRequest.Id))
+            {
+                return Result<ProductInstanceResponse>.Failure("Product instance ID cannot be null.");
+            }
 
+            if(!Guid.TryParse(productInstancePutRequest.Id, out Guid parsedId))
+            {
+                return Result<ProductInstanceResponse>.Failure("Product instance ID id not the correct format.");
+            }
+
+            var entity = await _productInstanceRepository.Find(e =>  e.Id == parsedId);
+
+            if (entity == null)
+            {
+                return Result<ProductInstanceResponse>.Failure("Product instance ID does not match any product.");
+            }
+
+            //check concurrency
+            if (productInstancePutRequest.ConcurrencyStamp == null)
+            {
+                return Result<ProductInstanceResponse>.Failure("ConcurrencyStamp is required when updating data.");
+            }
+            if (entity.ConcurrencyStamp != null && !entity.ConcurrencyStamp.SequenceEqual(productInstancePutRequest.ConcurrencyStamp))
+            {
+                return Result<ProductInstanceResponse>.Failure("Concurrency conflict: The product was modified by another process.");
+            }
+
+            //ProductID
+            if (!Guid.TryParse(productInstancePutRequest.ProductId, out Guid parsedProductId))
+            {
+                return Result<ProductInstanceResponse>.Failure("Product Id is not the correct format.");
+            }
+            else
+            {
+                var product = await _productRepository.Find(e => e.Id == parsedProductId);
+
+                if (product == null)
+                {
+                    return Result<ProductInstanceResponse>.Failure("Product Id does not match an existing Product.");
+                }
+            }
+
+            //Location ID
+            if (!Guid.TryParse(productInstancePutRequest.LocationId, out Guid parsedLocationId))
+            {
+                return Result<ProductInstanceResponse>.Failure("Location id is not the correct format.");
+            }
+            else
+            {
+                var location = await _locationRepository.Find(e => e.Id == parsedLocationId);
+
+                if (location == null)
+                {
+                    return Result<ProductInstanceResponse>.Failure("Location id provided does not exist");
+                } 
+            }
+            
+            //Update retreived entity and sent to the update method in the reposotory
+            entity.Barcode = productInstancePutRequest.Barcode;
+            entity.Status = productInstancePutRequest.Status;
+            entity.PurchasePrice = productInstancePutRequest.PurchasePrice;
+            entity.ProductId = parsedProductId;
+            entity.LocationId = parsedLocationId;
+
+            if (productInstancePutRequest.ProductInstance_Property != null && productInstancePutRequest.ProductInstance_Property.Any())
+            {
+                await this.AddPropertiesToInstance(entity, productInstancePutRequest.ProductInstance_Property);
+            }
+
+            var updatedEntity = await _productInstanceRepository.Update(entity);
+
+            var responseDTO = this.GetResponseDTO(updatedEntity);
+
+            if (responseDTO == null)
+            {
+                return Result<ProductInstanceResponse>.Failure("Could not return data, please go to all view.");
+            }
+
+            return Result<ProductInstanceResponse>.Success(responseDTO);
+        }
+        public async Task<Result<ProductInstanceResponse>> DeleteProductInstance(string id)
+        {
+            if(string.IsNullOrEmpty(id))
+            {
+                return Result<ProductInstanceResponse>.Failure("Id cannot be null");
+            }
+
+            if(!Guid.TryParse(id, out Guid parsedId))
+            {
+                return Result<ProductInstanceResponse>.Failure("Id is not the correct format");
+            }
+
+            var entity = await _productInstanceRepository.Find(e => e.Id == parsedId);
+
+            if(entity == null)
+            {
+                return Result<ProductInstanceResponse>.Failure("Id provided does not belong to an existing product");
+            }
+
+            var isDeleted = await _productInstanceRepository.Delete(id);
+
+            return isDeleted ?
+                Result<ProductInstanceResponse>.Success(new ProductInstanceResponse()) :
+                Result<ProductInstanceResponse>.Failure("Could not delete from DB.");
         }
 
     }

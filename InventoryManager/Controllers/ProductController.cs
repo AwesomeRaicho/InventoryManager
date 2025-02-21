@@ -21,33 +21,6 @@ namespace InventoryManager.Controllers
         {
             _productService = productService;
         }
-
-        //admin create
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ProductCreateRequest productRequest)
-        {
-            
-
-            if (!ModelState.IsValid)
-            {
-                var modelstate = ModelState.Where(e => e.Value != null).SelectMany(v => v.Value != null ? v.Value.Errors : new ModelErrorCollection(), (v, e) => new
-                    {
-                        Field = v.Key,
-                        Value = v.Value?.Errors
-                    }
-                );
-
-                return BadRequest(modelstate);
-            }
-
-            var created = await _productService.CreateProduct(productRequest);
-
-
-
-            return Ok(created);
-        }
-
-
         //Read
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByID( string id) 
@@ -76,6 +49,32 @@ namespace InventoryManager.Controllers
 
             return Ok(productResponses);
         }
+
+        //admin create
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] ProductCreateRequest productRequest)
+        {
+            
+
+            if (!ModelState.IsValid)
+            {
+                var modelstate = ModelState.Where(e => e.Value != null).SelectMany(v => v.Value != null ? v.Value.Errors : new ModelErrorCollection(), (v, e) => new
+                    {
+                        Field = v.Key,
+                        Value = v.Value?.Errors
+                    }
+                );
+
+                return BadRequest(modelstate);
+            }
+
+            var created = await _productService.CreateProduct(productRequest);
+
+
+
+            return Ok(created);
+        }
+
 
 
         //Update
@@ -115,7 +114,6 @@ namespace InventoryManager.Controllers
             {
                 return BadRequest(new {deleteProduct.Error});
             }
-
         }
     }
 }

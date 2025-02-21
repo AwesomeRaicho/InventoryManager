@@ -78,12 +78,41 @@ namespace InventoryManager.Controllers
 
         //Update
         [HttpPut]
-        public async Task<IActionResult> Put()
+        public async Task<IActionResult> Put([FromBody] ProductInstancePutRequest productInstancePutRequest)
         {
-            return Ok();
+
+            if(productInstancePutRequest == null)
+            {
+                return BadRequest(new { Error = "Product instance being updated cannot be null" });
+            }
+
+            var response = await _productInstanceService.UpdateProductInstance(productInstancePutRequest);
+
+            if(!response.IsSuccess)
+            {
+                return BadRequest(new { Error = response.Error });
+            }
+
+            return Ok(new {UpdatedInstance = response.Value });
         }
 
         //Delete
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest(new { Error = "Id cannot be blank." });
+            }
 
+            var response = await _productInstanceService.DeleteProductInstance(id);
+
+            if(!response.IsSuccess)
+            {
+                return BadRequest(new {Error = "Something when wrong, could not remove product instance."});
+            }
+
+            return Ok(new {Result = "Product instance has been deleted."});
+        }
     }
 }

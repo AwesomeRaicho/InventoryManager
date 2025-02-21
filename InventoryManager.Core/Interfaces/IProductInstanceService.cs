@@ -14,5 +14,9 @@ namespace InventoryManager.Core.Interfaces
         public Task<Result<ProductInstanceResponse>> GetProductInstanceById(string? id);
 
         public Task<Result<List<ProductInstanceResponse>>> GetAllProductInstances(ProductInstanceGetRequest productInstanceGetRequest);
+
+        public Task<Result<ProductInstanceResponse>> UpdateProductInstance(ProductInstancePutRequest productInstancePutRequest);
+
+        public Task<Result<ProductInstanceResponse>> DeleteProductInstance(string id);
     }
 }

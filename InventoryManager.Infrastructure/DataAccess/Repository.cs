@@ -74,14 +74,14 @@ namespace InventoryManager.Infrastructure.DataAccess
         }
 
         //  Update
-        public async Task<bool> Update(T entity)
+        public async Task<T> Update(T entity)
         {
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity), "Entity cannot be null.");
 
             _dbContext.Set<T>().Update(entity);
             await _dbContext.SaveChangesAsync();
-            return true;
+            return entity;
         }
 
         //  Get IQueryable (Best for Business Layer Filtering)
@@ -117,6 +117,16 @@ namespace InventoryManager.Infrastructure.DataAccess
                 throw new ArgumentException("Entities cannot be null or empty.", nameof(entities));
 
             await _dbContext.Set<T>().AddRangeAsync(entities);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        //Remove Multiple Entities
+        public async Task RemoveRange(List<T> entities)
+        {
+            if (entities == null || !entities.Any())
+                throw new ArgumentException("Entities cannot be null or empty.", nameof(entities));
+
+            _dbContext.Set<T>().RemoveRange(entities);
             await _dbContext.SaveChangesAsync();
         }
     }

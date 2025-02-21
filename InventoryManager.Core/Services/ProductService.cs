@@ -176,10 +176,7 @@ namespace InventoryManager.Core.Services
                 return null;
             }
 
-
-
             return this.GetProductResponseList(products);
-
         }
 
         public async Task<Result<ProductResponse>> UpdateProduct(ProductPutRequest productPutRequest)
@@ -229,12 +226,12 @@ namespace InventoryManager.Core.Services
             dbProduct.Price = productPutRequest.Price;
 
             var updateResult = await _productRepository.Update(dbProduct);
-            if (!updateResult)
+            if (updateResult == null)
             {
                 return Result<ProductResponse>.Failure("Failed to update product.");
             }
 
-            var response = GetProductResponse(dbProduct);
+            var response = GetProductResponse(updateResult);
             return response != null
                 ? Result<ProductResponse>.Success(response)
                 : Result<ProductResponse>.Failure("Failed to generate response DTO.");
@@ -264,7 +261,6 @@ namespace InventoryManager.Core.Services
             await _productRepository.Delete(id);
 
             return Result<bool>.Success(true);
-
 
         }
     }

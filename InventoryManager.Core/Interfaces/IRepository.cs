@@ -15,7 +15,7 @@ namespace InventoryManager.Core.Interfaces
         public Task<T?> Find(Expression<Func<T, bool>> predicate);
         public Task<T?> Find(Expression<Func<T, bool>> predicate, params Func<IQueryable<T>, IQueryable<T>>[] includes);
         public Task<IEnumerable<T>> FindAll(IQueryable<T> query, int? pageIndex, int? pageSize);
-        public Task<bool> Update(T entity);
+        public Task<T> Update(T entity);
         public Task<bool> Delete(string id);
 
         /// <summary>
@@ -26,5 +26,7 @@ namespace InventoryManager.Core.Interfaces
         public Task<bool> IsUnique(Expression<Func<T, bool>> predicate);
 
         public Task AddRange(List<T> entities);
+
+        public Task RemoveRange(List<T> entities);
     }
 }
