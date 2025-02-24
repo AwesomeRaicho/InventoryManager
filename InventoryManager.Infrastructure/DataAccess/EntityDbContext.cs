@@ -88,8 +88,7 @@ namespace InventoryManager.Infrastructure.DataAccess
             //concurrency property
             modelBuilder.Entity<Product>()
                 .Property(e => e.ConcurrencyStamp)
-                .IsRowVersion()
-                .HasColumnType("timestamp");
+                .IsRowVersion();
 
             modelBuilder.Entity<Product>()
                 .Property(e => e.Price)
@@ -102,6 +101,14 @@ namespace InventoryManager.Infrastructure.DataAccess
 
 
             modelBuilder.Entity<ProductType>().HasKey(e => e.Id);
+
+            modelBuilder.Entity<ProductType>()
+                .Property(e => e.ConcurrencyStamp)
+                .IsRowVersion();
+
+            modelBuilder.Entity<ProductType>()
+                .HasIndex(e => e.Name)
+                .IsUnique();
 
             modelBuilder.Entity<ProductType>()
                 .Property(e => e.Name)
@@ -136,8 +143,7 @@ namespace InventoryManager.Infrastructure.DataAccess
 
             modelBuilder.Entity<ProductInstance>()
                .Property(e => e.ConcurrencyStamp)
-               .IsRowVersion()
-               .HasColumnType("timestamp");
+               .IsRowVersion();
 
             //foreign Keys and Navigation
 
@@ -166,6 +172,11 @@ namespace InventoryManager.Infrastructure.DataAccess
                 .HasKey(e => e.Id);
 
             modelBuilder.Entity<Location>()
+                .Property(e => e.ConcurrencyStamp)
+                .IsRowVersion();
+
+
+            modelBuilder.Entity<Location>()
                 .Property(e => e.Name)
                 .HasMaxLength(22)
                 .IsRequired();
@@ -181,8 +192,12 @@ namespace InventoryManager.Infrastructure.DataAccess
                 .HasMaxLength(22)
                 .IsRequired();
 
+            modelBuilder.Entity<PropertyType>()
+                .Property(e => e.ConcurrencyStamp)
+                .IsRowVersion();
 
-            //PROPERTY TABLE
+
+            //PROPERTYINSTANCE TABLE
 
             modelBuilder.Entity<PropertyInstance>()
                 .HasKey(e => e.Id);

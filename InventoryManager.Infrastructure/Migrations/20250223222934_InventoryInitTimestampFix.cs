@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace InventoryManager.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InventoryInit : Migration
+    public partial class InventoryInitTimestampFix : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -55,7 +55,8 @@ namespace InventoryManager.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false),
+                    ConcurrencyStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -67,7 +68,8 @@ namespace InventoryManager.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: true)
+                    Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: true),
+                    ConcurrencyStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -79,7 +81,8 @@ namespace InventoryManager.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false),
+                    ConcurrencyStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -201,7 +204,7 @@ namespace InventoryManager.Infrastructure.Migrations
                     ProductName = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     StockAmount = table.Column<int>(type: "int", nullable: false),
-                    ConcurrencyStamp = table.Column<byte[]>(type: "timestamp", rowVersion: true, nullable: true),
+                    ConcurrencyStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false),
                     ProductTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
@@ -221,6 +224,7 @@ namespace InventoryManager.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false),
+                    ConcurrencyStamp = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
                     PropertyTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
@@ -244,7 +248,7 @@ namespace InventoryManager.Infrastructure.Migrations
                     EntryDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     SellDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ConcurrencyStamp = table.Column<byte[]>(type: "timestamp", rowVersion: true, nullable: true),
+                    ConcurrencyStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
                     LocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
@@ -366,6 +370,13 @@ namespace InventoryManager.Infrastructure.Migrations
                 name: "IX_Products_ProductTypeId",
                 table: "Products",
                 column: "ProductTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductTypes_Name",
+                table: "ProductTypes",
+                column: "Name",
+                unique: true,
+                filter: "[Name] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Properties_PropertyTypeId",

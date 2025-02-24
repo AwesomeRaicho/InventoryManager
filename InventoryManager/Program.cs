@@ -18,6 +18,8 @@ builder.Services.AddSingleton<IExceptionHandling, ExceptionHandling>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductInstanceService, ProductInstanceService>();
+builder.Services.AddScoped<IProductTypeService, ProductTypeService>();
+
 
 
 builder.Services.AddDbContext<EntityDbContext>(options =>

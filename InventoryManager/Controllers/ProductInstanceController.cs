@@ -60,7 +60,7 @@ namespace InventoryManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] ProductInstanceGetRequest productInstanceGetRequest)
+        public async Task<IActionResult> GetAllProductInstance([FromQuery] ProductInstanceGetRequest productInstanceGetRequest)
         {
             if(productInstanceGetRequest == null)
             {  return BadRequest(new {Error = "Get request cannot be null."}); }
