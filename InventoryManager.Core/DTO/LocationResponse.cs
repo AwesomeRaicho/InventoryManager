@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace InventoryManager.Core.Models
+namespace InventoryManager.Core.DTO
 {
-    public class Location
+    public class LocationResponse
     {
-        public Guid Id { get; set; }
-
+        public string? Id { get; set; }
         public string? Name { get; set; }
         public byte[]? ConcurrencyStamp { get; set; }
+
     }
 }
