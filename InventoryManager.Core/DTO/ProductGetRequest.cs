@@ -16,10 +16,9 @@ namespace InventoryManager.Core.DTO
         public string? ProductType { get; set; }
         public string? ProductTypeId { get; set;}
         
-        public int? PageNumber { get; set; } = 0;
+        public int PageNumber { get; set; } = 0;
         
-        [Range(20, 100)]
-        public int? PageSize { get; set;} = 0;
+        public int PageSize { get; set;} = 0;
         public OrderBy OrderBy { get; set; } = OrderBy.Desc;
     }
 }

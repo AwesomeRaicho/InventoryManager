@@ -20,6 +20,6 @@ namespace InventoryManager.Core.Models
         public PropertyType? PropertyType { get; set; }
 
         //one-to-many
-        public List<ProductInstance_Property>? ProductInstance_Property { get; set; }
+        public List<Product_Property>? Product_Property { get; set; }
     }
 }

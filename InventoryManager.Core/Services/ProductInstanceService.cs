@@ -23,10 +23,10 @@ namespace InventoryManager.Core.Services
         private readonly IRepository<ProductInstance> _productInstanceRepository;
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<Location> _locationRepository;
-        private readonly IRepository<ProductInstance_Property> _productInstance_PropertyRepository;
+        private readonly IRepository<Product_Property> _productInstance_PropertyRepository;
         private readonly IRepository<PropertyInstance> _propertyInstanceRepository; 
 
-        public ProductInstanceService(IRepository<ProductInstance> productInstanceRepo, IRepository<Product> productRepo, IRepository<Location> locationRepo, IRepository<ProductInstance_Property> product_PropertyRepository, IRepository<PropertyInstance> PropertyInstanceRepo)
+        public ProductInstanceService(IRepository<ProductInstance> productInstanceRepo, IRepository<Product> productRepo, IRepository<Location> locationRepo, IRepository<Product_Property> product_PropertyRepository, IRepository<PropertyInstance> PropertyInstanceRepo)
         {
             _productInstanceRepository = productInstanceRepo;
             _productRepository = productRepo;
@@ -84,7 +84,7 @@ namespace InventoryManager.Core.Services
             // Get all relationships for this specific ProductInstance
             var existingRelations = await _productInstance_PropertyRepository
                 .GetQueryable()
-                .Where(e => e.ProductInstanceId == entity.Id)
+                .Where(e => e.ProductId == entity.Id)
                 .ToListAsync();
 
             var existingPropertyIdsInDb = existingRelations.Select(r => r.PropertyId).ToList();
@@ -102,9 +102,9 @@ namespace InventoryManager.Core.Services
             // Identify new relationships to add (those in the incoming list but NOT in the DB)
             var newRelations = existingPropertyIds
                 .Except(existingPropertyIdsInDb)
-                .Select(propertyId => new ProductInstance_Property
+                .Select(propertyId => new Product_Property
                 {
-                    ProductInstanceId = entity.Id,
+                    ProductId = entity.Id,
                     PropertyId = propertyId
                 })
                 .ToList();
@@ -240,8 +240,11 @@ namespace InventoryManager.Core.Services
             {
                 return Result<List<ProductInstanceResponse>>.Failure("Get request cannot be null.");
             }
+
             var parseResult = Guid.TryParse(productInstanceGetRequest.ProductId, out Guid parsedProductId);
+            
             bool productExists = false;
+            
             if (!string.IsNullOrEmpty(productInstanceGetRequest.ProductId))
             {
                 if(!parseResult)
@@ -441,5 +444,75 @@ namespace InventoryManager.Core.Services
                 Result<ProductInstanceResponse>.Failure("Could not delete from DB.");
         }
 
+
+        public async Task<Result<List<ProductInstanceResponse>>> GetByProductId(ProductInstanceGetRequest productInstanceGetRequest)
+        {
+            if (productInstanceGetRequest == null)
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Get request cannot be null.");
+            }
+
+            if(string.IsNullOrEmpty(productInstanceGetRequest.ProductId))
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Product Id cannot be null.");
+            }
+
+            if(!Guid.TryParse(productInstanceGetRequest.ProductId, out Guid parsedProductId))
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Product Id is not the correc format.");
+            }
+
+            var dbProduct = await _productRepository.Find(e => e.Id == parsedProductId);
+
+            if(dbProduct == null)
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Product Id does not exist.");
+            }
+
+            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber < 0 ? 0 : productInstanceGetRequest.PageNumber;
+
+            productInstanceGetRequest.PageSize = productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 100 ? 100 : productInstanceGetRequest.PageSize;
+
+            var query = _productInstanceRepository.GetQueryable();
+
+            if(productInstanceGetRequest.OrderBy == OrderBy.Asc)
+            {
+                query = query.OrderBy(e => e.Location);
+            }
+            else
+            {
+                query = query.OrderByDescending(e => e.Location);
+            }
+
+            query = query.Where(e => e.ProductId == parsedProductId);
+
+            var dbList = await query.Skip(productInstanceGetRequest.PageSize * productInstanceGetRequest.PageNumber).Take(productInstanceGetRequest.PageSize).ToListAsync();
+
+
+            
+            if(!dbList.Any())
+            {
+                return Result<List<ProductInstanceResponse>>.Success(new List<ProductInstanceResponse>());
+            }
+
+
+
+
+            var response = dbList.Select(e => new ProductInstanceResponse()
+            {
+                Barcode = e.Barcode,
+                Id = e.Id.ToString(),
+                EntryDate = e.EntryDate,
+                LocationId = e.LocationId.ToString(),
+                Status = e.Status,
+                ConcurrencyStamp = e.ConcurrencyStamp,
+                LocationName = e.Location != null ?  e.Location.Name : null,
+                ProductId = e.ProductId.ToString(),
+                ProductName = e.Product != null ? e.Product.ProductName : null,
+            }).ToList();
+
+            return Result<List<ProductInstanceResponse>>.Success(response);
+
+        }
     }
 }

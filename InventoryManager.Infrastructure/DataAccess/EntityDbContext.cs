@@ -22,7 +22,7 @@ namespace InventoryManager.Infrastructure.DataAccess
         public DbSet<Location> Locations { get; set; }
         public DbSet<PropertyType> PropertyTypes { get; set; }
         public DbSet<PropertyInstance> Properties { get; set; }
-        public DbSet<ProductInstance_Property> ProductInstances_Propertys { get; set; }
+        public DbSet<Product_Property> Product_Propertys { get; set; }
 
 
         public EntityDbContext(DbContextOptions<EntityDbContext> options) : base(options) { }
@@ -35,17 +35,17 @@ namespace InventoryManager.Infrastructure.DataAccess
 
             //Join table for ProductInstance_Property
 
-            modelBuilder.Entity<ProductInstance_Property>().HasKey(e => new { e.ProductInstanceId, e.PropertyId });
+            modelBuilder.Entity<Product_Property>().HasKey(e => new { e.ProductId, e.PropertyId });
             
-            modelBuilder.Entity<ProductInstance_Property>()
-                .HasOne(e => e.ProductInstance)
-                .WithMany(e => e.ProductInstance_Property)
-                .HasForeignKey(e => e.ProductInstanceId)
+            modelBuilder.Entity<Product_Property>()
+                .HasOne(e => e.Product)
+                .WithMany(e => e.Product_Property)
+                .HasForeignKey(e => e.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ProductInstance_Property>()
+            modelBuilder.Entity<Product_Property>()
                 .HasOne(e => e.Property)
-                .WithMany(e => e.ProductInstance_Property)
+                .WithMany(e => e.Product_Property)
                 .HasForeignKey(e => e.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -199,7 +199,7 @@ namespace InventoryManager.Infrastructure.DataAccess
 
             //PROPERTYINSTANCE TABLE
 
-            modelBuilder.Entity<PropertyInstance>()
+            modelBuilder.Entity<Core.Models.PropertyInstance>()
                 .HasKey(e => e.Id);
 
             modelBuilder.Entity<PropertyInstance>()
@@ -209,13 +209,13 @@ namespace InventoryManager.Infrastructure.DataAccess
 
 
             //Navigation and foreign key
-            modelBuilder.Entity<PropertyInstance>()
-                .HasOne (e => e.PropertyType)
+            modelBuilder.Entity<Core.Models.PropertyInstance>()
+                .HasOne(e => e.PropertyType)
                 .WithMany()
                 .HasForeignKey(e => e.PropertyTypeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            modelBuilder.Entity<PropertyInstance>()
+            modelBuilder.Entity<Core.Models.PropertyInstance>()
                 .HasIndex(e => e.PropertyTypeId);
 
         }

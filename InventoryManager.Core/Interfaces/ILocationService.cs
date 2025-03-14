@@ -14,5 +14,6 @@ namespace InventoryManager.Core.Interfaces
         public Task<Result<List<LocationResponse>>> GetAllLocations(LocationGetRequest locationGetRequest);
         public Task<Result<LocationResponse>> UpdateLocation(LocationPutRequest locationPutRequest);
         public Task<Result<bool>> DeleteLocation(string id);
+
     }
 }

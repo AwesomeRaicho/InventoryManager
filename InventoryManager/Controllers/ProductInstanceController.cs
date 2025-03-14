@@ -114,5 +114,26 @@ namespace InventoryManager.Controllers
 
             return Ok(new {Result = "Product instance has been deleted."});
         }
+
+        [HttpGet("by-product")]
+        public async Task<IActionResult> ByProduct([FromQuery] ProductInstanceGetRequest productInstanceGetRequest)
+        {
+            if(productInstanceGetRequest == null)
+            {
+                return BadRequest(new { Error = "Get request cannot be null."});
+            }
+
+            var response = await _productInstanceService.GetByProductId(productInstanceGetRequest);
+
+            if(!response.IsSuccess)
+            {
+                return BadRequest(new {Error = response.Error});
+            }
+
+
+            return Ok(new {product_instances_by_product = response.Value});
+
+        }
     }
 }
+

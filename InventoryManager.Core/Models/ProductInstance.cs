@@ -26,8 +26,7 @@ namespace InventoryManager.Core.Models
         public Location? Location { get; set; }
         public Product? Product { get; set; }
 
-        //many-to-many
-        public List<ProductInstance_Property>? ProductInstance_Property { get; set; }
+
 
 
     }

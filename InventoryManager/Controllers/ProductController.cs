@@ -7,6 +7,7 @@ using InventoryManager.Core.Models;
 using InventoryManager.Core.DTO;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Reflection.Metadata.Ecma335;
+using System.Net.WebSockets;
 
 
 namespace InventoryManager.Controllers
@@ -16,10 +17,12 @@ namespace InventoryManager.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly IProduct_PropertyService _productPropertyService;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductService productService, IProduct_PropertyService productPropertyService)
         {
             _productService = productService;
+            _productPropertyService = productPropertyService;
         }
         //Read
         [HttpGet("{id}")]
@@ -55,24 +58,19 @@ namespace InventoryManager.Controllers
         public async Task<IActionResult> Create([FromBody] ProductCreateRequest productRequest)
         {
             
-
-            if (!ModelState.IsValid)
+            if(productRequest == null)
             {
-                var modelstate = ModelState.Where(e => e.Value != null).SelectMany(v => v.Value != null ? v.Value.Errors : new ModelErrorCollection(), (v, e) => new
-                    {
-                        Field = v.Key,
-                        Value = v.Value?.Errors
-                    }
-                );
-
-                return BadRequest(modelstate);
+                return BadRequest(new {Error = "Create request cannot be null"}); 
             }
 
-            var created = await _productService.CreateProduct(productRequest);
+            var response = await _productService.CreateProduct(productRequest);
 
+            if(!response.IsSuccess)
+            {
+                return BadRequest(new {Error = response.Error});
+            }
 
-
-            return Ok(created);
+            return Ok(new {Product_Created = response.Value});
         }
 
 
@@ -114,6 +112,26 @@ namespace InventoryManager.Controllers
             {
                 return BadRequest(new {deleteProduct.Error});
             }
+        }
+
+        [HttpGet("by-product-type")]
+        public async Task<IActionResult> GetByProductId([FromQuery] ProductGetRequest productGetRequest)
+        {
+
+            if(productGetRequest == null)
+            {
+                return BadRequest(new {Error = "Get request cannot be null."});
+            }
+
+            var response = await _productService.GetAllByProductTypeId(productGetRequest);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(new { Error = response.Error });
+            }
+
+
+            return Ok(new {Product_List = response.Value});
         }
     }
 }

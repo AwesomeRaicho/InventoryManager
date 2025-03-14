@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace InventoryManager.Core.Models
 {
-    public class ProductInstance_Property
+    public class Product_Property
     {
-        public Guid ProductInstanceId { get; set; }
+        public Guid ProductId { get; set; }
         public Guid PropertyId { get; set; }
 
         //Navigation Properties
-        public ProductInstance? ProductInstance { get; set; }
+        public Product? Product { get; set; }
         public PropertyInstance? Property { get; set; }
     }
 }

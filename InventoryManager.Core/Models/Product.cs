@@ -22,5 +22,8 @@ namespace InventoryManager.Core.Models
 
         //Navigation
         public ProductType? ProductType { get; set;}
+
+        //many-to-many
+        public List<Product_Property>? Product_Property { get; set; }
     }
 }

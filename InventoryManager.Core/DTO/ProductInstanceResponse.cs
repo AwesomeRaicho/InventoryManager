@@ -19,7 +19,5 @@ namespace InventoryManager.Core.DTO
 
         public DateTime? EntryDate { get; set; }
 
-        //ADD PROPERTIES NAMES AND IDs
-
     }
 }

@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace InventoryManager.Core.DTO
 {
-    public class ProductTypeResponse
+    public class PropertyTypeResponse
     {
-        public string? Id { get; set; }
         public string? Name { get; set; }
+        public string? Id { get; set; }
         public byte[]? ConcurrencyStamp { get; set; }
-
 
     }
 }

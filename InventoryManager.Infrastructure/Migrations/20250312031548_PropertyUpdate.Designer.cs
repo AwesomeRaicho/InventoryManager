@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventoryManager.Infrastructure.Migrations
 {
     [DbContext(typeof(EntityDbContext))]
-    [Migration("20250223222934_InventoryInitTimestampFix")]
-    partial class InventoryInitTimestampFix
+    [Migration("20250312031548_PropertyUpdate")]
+    partial class PropertyUpdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -232,21 +232,6 @@ namespace InventoryManager.Infrastructure.Migrations
                     b.ToTable("ProductInstances");
                 });
 
-            modelBuilder.Entity("InventoryManager.Core.Models.ProductInstance_Property", b =>
-                {
-                    b.Property<Guid>("ProductInstanceId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("PropertyId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ProductInstanceId", "PropertyId");
-
-                    b.HasIndex("PropertyId");
-
-                    b.ToTable("ProductInstances_Propertys");
-                });
-
             modelBuilder.Entity("InventoryManager.Core.Models.ProductType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -269,6 +254,21 @@ namespace InventoryManager.Infrastructure.Migrations
                         .HasFilter("[Name] IS NOT NULL");
 
                     b.ToTable("ProductTypes");
+                });
+
+            modelBuilder.Entity("InventoryManager.Core.Models.Product_Property", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ProductId", "PropertyId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("Product_Propertys");
                 });
 
             modelBuilder.Entity("InventoryManager.Core.Models.PropertyInstance", b =>
@@ -446,21 +446,21 @@ namespace InventoryManager.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("InventoryManager.Core.Models.ProductInstance_Property", b =>
+            modelBuilder.Entity("InventoryManager.Core.Models.Product_Property", b =>
                 {
-                    b.HasOne("InventoryManager.Core.Models.ProductInstance", "ProductInstance")
-                        .WithMany("ProductInstance_Property")
-                        .HasForeignKey("ProductInstanceId")
+                    b.HasOne("InventoryManager.Core.Models.Product", "Product")
+                        .WithMany("Product_Property")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("InventoryManager.Core.Models.PropertyInstance", "Property")
-                        .WithMany("ProductInstance_Property")
+                        .WithMany("Product_Property")
                         .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ProductInstance");
+                    b.Navigation("Product");
 
                     b.Navigation("Property");
                 });
@@ -526,14 +526,14 @@ namespace InventoryManager.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("InventoryManager.Core.Models.ProductInstance", b =>
+            modelBuilder.Entity("InventoryManager.Core.Models.Product", b =>
                 {
-                    b.Navigation("ProductInstance_Property");
+                    b.Navigation("Product_Property");
                 });
 
             modelBuilder.Entity("InventoryManager.Core.Models.PropertyInstance", b =>
                 {
-                    b.Navigation("ProductInstance_Property");
+                    b.Navigation("Product_Property");
                 });
 #pragma warning restore 612, 618
         }

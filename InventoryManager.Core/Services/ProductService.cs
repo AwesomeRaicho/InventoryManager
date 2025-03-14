@@ -18,11 +18,13 @@ namespace InventoryManager.Core.Services
     {
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<ProductType> _productTypeRepository;
+        private readonly IProduct_PropertyService _productPropertyService;
 
-        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository)
+        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService)
         {
             _productRepository = productRepository;
             _productTypeRepository = productTypeRepository;
+            _productPropertyService = productPropertyService;
         }
 
         /// <summary>
@@ -30,12 +32,9 @@ namespace InventoryManager.Core.Services
         /// </summary>
         /// <param name="product">Product entity</param>
         /// <returns></returns>
-        public ProductResponse? GetProductResponse(Product product)
+        public ProductResponse GetProductResponse(Product product)
         {
-            if(product == null)
-            {
-                return null;
-            }
+            
 
             return new ProductResponse()
             {
@@ -53,11 +52,11 @@ namespace InventoryManager.Core.Services
 
 
 
-        public async Task<Result<bool>> CreateProduct(ProductCreateRequest productCreateRequest)
+        public async Task<Result<ProductResponse>> CreateProduct(ProductCreateRequest productCreateRequest)
         {
             if (productCreateRequest == null)
             {
-                return Result<bool>.Failure("Product data cannot be empty.");
+                return Result<ProductResponse>.Failure("Product data cannot be empty.");
             }
 
             var productDb = await _productRepository.Find(e =>
@@ -66,22 +65,20 @@ namespace InventoryManager.Core.Services
 
             if (productDb != null)
             {
-                return Result<bool>.Failure("Product already exists. Either the name or product number is in use.");
+                return Result<ProductResponse>.Failure("Product already exists. Either the name or product number is in use.");
             }
 
-            if (!string.IsNullOrEmpty(productCreateRequest.ProductTypeId))
+
+            if (!Guid.TryParse(productCreateRequest.ProductTypeId, out var productTypeId))
             {
-                if (!Guid.TryParse(productCreateRequest.ProductTypeId, out var productTypeId))
-                {
-                    return Result<bool>.Failure("Invalid Product Type ID.");
-                }
+                return Result<ProductResponse>.Failure("Invalid Product Type ID.");
+            }
 
-                var productType = await _productTypeRepository.Find(e => e.Id == productTypeId);
+            var productType = await _productTypeRepository.Find(e => e.Id == productTypeId);
 
-                if (productType == null)
-                {
-                    return Result<bool>.Failure("Product Type selected does not exist.");
-                }
+            if (productType == null)
+            {
+                return Result<ProductResponse>.Failure("Product Type selected does not exist.");
             }
 
             var newProduct = new Product()
@@ -95,7 +92,23 @@ namespace InventoryManager.Core.Services
 
             await _productRepository.Create(newProduct);
 
-            return Result<bool>.Success(true);
+            if(productCreateRequest.PropertyIds != null && productCreateRequest.PropertyIds.Any())
+            {
+                await _productPropertyService.Create(newProduct.Id.ToString(), productCreateRequest.PropertyIds);
+            }
+
+
+            var response = this.GetProductResponse(newProduct);
+
+            var list = await _productPropertyService.GetByProductId(newProduct.Id.ToString());
+
+            if(list.Any())
+            {
+                response.Properties = list;
+            }
+
+
+            return Result<ProductResponse>.Success(response);
         }
 
 
@@ -247,7 +260,6 @@ namespace InventoryManager.Core.Services
             if(!Guid.TryParse(id, out var productId))
             {
                 return Result<bool>.Failure("Id provided is incorrect format.");
-
             }
 
             var response = await _productRepository.GetEntityById(id);
@@ -263,5 +275,53 @@ namespace InventoryManager.Core.Services
             return Result<bool>.Success(true);
 
         }
+
+        public async Task<Result<List<ProductResponse>>> GetAllByProductTypeId(ProductGetRequest productGetRequest)
+        {
+            if (productGetRequest == null || string.IsNullOrEmpty(productGetRequest.ProductTypeId))
+            {
+                return Result<List<ProductResponse>>.Failure("Product Type Id cannot be null.");
+            }
+
+            if(!Guid.TryParse(productGetRequest.ProductTypeId, out var parsedProductTypeId))
+            {
+                return Result<List<ProductResponse>>.Failure("Product Type Id is not the correct format.");
+            }
+
+            var productType = await _productTypeRepository.Find(e => e.Id == parsedProductTypeId);
+
+            if(productType == null)
+            {
+                return Result<List<ProductResponse>>.Failure("Product Type Id does not exist.");
+            }
+
+            productGetRequest.PageNumber = productGetRequest.PageNumber < 0 ? 0 : productGetRequest.PageNumber;
+
+            productGetRequest.PageSize = productGetRequest.PageSize < 20 ? 20 : productGetRequest.PageSize > 100 ? 100 : productGetRequest.PageSize;
+
+            
+            var query = _productRepository.GetQueryable();
+
+            query = query.Where(e => e.ProductTypeId == parsedProductTypeId);
+
+            query = query.OrderBy(e => e.ProductName);
+
+            var productList = await query.Skip(productGetRequest.PageNumber * productGetRequest.PageSize).Take(productGetRequest.PageSize).ToListAsync();
+
+            var response = productList.Select(e => new ProductResponse()
+            {
+                Id = e.Id,
+                ProductName = e.ProductName,
+                ConcurrencyStamp = e.ConcurrencyStamp,
+                Price = e.Price,
+                ProductNumber = e.ProductNumber,
+                ProductTypeId = e.ProductTypeId.ToString(),
+                StockAmount = e.StockAmount,
+                ProductTypeName = e.ProductType != null ? e.ProductType.Name : null,
+            }).ToList();
+
+            return Result<List<ProductResponse>>.Success(response);
+        }
+
     }
 }

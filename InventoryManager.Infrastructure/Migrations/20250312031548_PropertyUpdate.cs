@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace InventoryManager.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InventoryInitTimestampFix : Migration
+    public partial class PropertyUpdate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -270,23 +270,23 @@ namespace InventoryManager.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductInstances_Propertys",
+                name: "Product_Propertys",
                 columns: table => new
                 {
-                    ProductInstanceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PropertyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductInstances_Propertys", x => new { x.ProductInstanceId, x.PropertyId });
+                    table.PrimaryKey("PK_Product_Propertys", x => new { x.ProductId, x.PropertyId });
                     table.ForeignKey(
-                        name: "FK_ProductInstances_Propertys_ProductInstances_ProductInstanceId",
-                        column: x => x.ProductInstanceId,
-                        principalTable: "ProductInstances",
+                        name: "FK_Product_Propertys_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProductInstances_Propertys_Properties_PropertyId",
+                        name: "FK_Product_Propertys_Properties_PropertyId",
                         column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "Id",
@@ -333,6 +333,11 @@ namespace InventoryManager.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Product_Propertys_PropertyId",
+                table: "Product_Propertys",
+                column: "PropertyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProductInstances_Barcode",
                 table: "ProductInstances",
                 column: "Barcode",
@@ -348,11 +353,6 @@ namespace InventoryManager.Infrastructure.Migrations
                 name: "IX_ProductInstances_ProductId",
                 table: "ProductInstances",
                 column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductInstances_Propertys_PropertyId",
-                table: "ProductInstances_Propertys",
-                column: "PropertyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_ProductName",
@@ -403,16 +403,16 @@ namespace InventoryManager.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "ProductInstances_Propertys");
+                name: "Product_Propertys");
+
+            migrationBuilder.DropTable(
+                name: "ProductInstances");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-                name: "ProductInstances");
 
             migrationBuilder.DropTable(
                 name: "Properties");
