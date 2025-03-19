@@ -120,5 +120,23 @@ namespace InventoryManager.Controllers
 
         }
 
+        [HttpGet("by-property-type")]
+        public async Task<IActionResult> GetByPropertyTypeId([FromQuery] PropertyInstanceGetRequest propertyInstanceGetRequest)
+        {
+            if (propertyInstanceGetRequest == null)
+            {
+                return BadRequest(new { Error = "Property request cannot be null." });
+            }
+
+            var response = await _propertyInstanceService.GetPropertyInstancesByProductTypeId(propertyInstanceGetRequest);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(new { Error = response.Error });
+
+            }
+
+            return Ok(new {Property_Instances = response.Value});
+        }
     }
 }

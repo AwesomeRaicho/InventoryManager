@@ -220,9 +220,58 @@ namespace InventoryManager.Core.Services
 
         }
 
+        public async Task<Result<List<PropertyInstanceResponse>>> GetPropertyInstancesByProductTypeId(PropertyInstanceGetRequest propertyInstanceGetRequest)
+        {
+            if(propertyInstanceGetRequest == null)
+            {
+                return Result<List<PropertyInstanceResponse>>.Failure("PropertyInstanceGetRequest cannot be null.");
+            }
 
+            if(string.IsNullOrEmpty(propertyInstanceGetRequest.PropertyTypeId))
+            {
+                return Result<List<PropertyInstanceResponse>>.Failure("Property type ID cannot be null.");
+            }
 
+            if(!Guid.TryParse(propertyInstanceGetRequest.PropertyTypeId, out Guid parsedPropertyTypeId))
+            {
+                return Result<List<PropertyInstanceResponse>>.Failure("Product type ID is not the correct format.");
+            }
 
+            propertyInstanceGetRequest.PageIndex = propertyInstanceGetRequest.PageIndex < 0 ? 0 : propertyInstanceGetRequest.PageIndex;
+
+            propertyInstanceGetRequest.PageSize = propertyInstanceGetRequest.PageSize < 20 ? 20 : propertyInstanceGetRequest.PageSize > 100 ? 100 : propertyInstanceGetRequest.PageSize;
+
+            var query = _propertyInstanceRepository.GetQueryable();
+
+            query = query.Where(e => e.PropertyTypeId == parsedPropertyTypeId);
+
+            if(propertyInstanceGetRequest.OrderBy == Enums.OrderBy.Asc)
+            {
+                query = query.OrderBy(e => e.Name);
+            }else
+            {
+                query = query.OrderByDescending(e => e.Name);
+            }
+
+            var dbList = await query.Skip(propertyInstanceGetRequest.PageSize * propertyInstanceGetRequest.PageIndex).Take(propertyInstanceGetRequest.PageSize).ToListAsync();
+
+            if (!dbList.Any())
+            {
+                return Result<List<PropertyInstanceResponse>>.Success(new List<PropertyInstanceResponse>());
+            }
+
+            var responses = dbList.Select(e => new PropertyInstanceResponse()
+            {
+                Id = e.Id.ToString(),
+                Name = e.Name,
+                PropertyTypeId = e.PropertyTypeId.ToString(),
+                ConcurrencyStamp = e.ConcurrencyStamp,
+                PropertyTypeName = e.PropertyType != null ? e.PropertyType.Name : null,
+            }).ToList();
+
+            return Result<List<PropertyInstanceResponse>>.Success(responses);
+
+        }
     }
 }
 

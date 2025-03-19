@@ -10,7 +10,7 @@ namespace InventoryManager.Core.DTO
     public class PropertyInstanceGetRequest
     {
         public string? SearchText { get; set; }
-
+        public string? PropertyTypeId { get; set; }
         //pagination
 
         public int PageIndex { get; set; } = 0;

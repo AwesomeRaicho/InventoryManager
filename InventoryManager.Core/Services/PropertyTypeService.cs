@@ -14,10 +14,12 @@ namespace InventoryManager.Core.Services
     public class PropertyTypeService : IPropertyTypeService
     {
         private readonly IRepository<PropertyType> _propertyTypeRepository;
+        private readonly IRepository<PropertyInstance> _propertyIntanceRepository;
 
-        public PropertyTypeService(IRepository<PropertyType> propertyTypeService)
+        public PropertyTypeService(IRepository<PropertyType> propertyTypeService, IRepository<PropertyInstance> propertyIntanceRepository)
         {
             _propertyTypeRepository = propertyTypeService;
+            _propertyIntanceRepository = propertyIntanceRepository;
         }
 
         private PropertyTypeResponse GetPropertyTypeResponse(PropertyType propertyType)
@@ -76,6 +78,13 @@ namespace InventoryManager.Core.Services
             if( dbEntity == null )
             {
                 return Result<bool>.Failure("Product type Id does not belong to an existing entity.");
+            }
+
+            var propertyInstances = await _propertyIntanceRepository.GetQueryable().Where(e => e.PropertyTypeId == parsedId).ToListAsync();
+
+            if( propertyInstances.Any() )
+            {
+                await _propertyIntanceRepository.RemoveRange(propertyInstances);
             }
 
             await _propertyTypeRepository.Delete(id);
@@ -166,6 +175,14 @@ namespace InventoryManager.Core.Services
                 return Result<PropertyTypeResponse>.Failure("PropertyType update request requires ID and Name.");
             }
 
+            var dbEntityName = await _propertyTypeRepository.Find(e => e.Name == PutRequest.Name);
+
+            if (dbEntityName != null)
+            {
+                return Result<PropertyTypeResponse>.Failure("Property type name already exists.");
+
+            }
+
             if (!Guid.TryParse(PutRequest.Id, out Guid parsedId))
             {
                 return Result<PropertyTypeResponse>.Failure("PropertyType ID is not the correct format.");
@@ -195,7 +212,6 @@ namespace InventoryManager.Core.Services
             var response = this.GetPropertyTypeResponse(dbEntity);
 
             return Result<PropertyTypeResponse>.Success(response);
-
         }
     }
 }

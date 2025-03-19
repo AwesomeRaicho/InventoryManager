@@ -31,7 +31,7 @@ namespace InventoryManager.Controllers
                 return BadRequest(new { Error = response.Error });
             }
 
-            return Ok(new {ProductType = response.Value});
+            return Ok(new {PropertyType = response.Value});
         }
 
         [HttpGet("{id}")]
@@ -49,7 +49,7 @@ namespace InventoryManager.Controllers
                 return BadRequest(new { Error = response.Error });
             }
 
-            return Ok(new {ProductType = response.Value});
+            return Ok(new {propertyType = response.Value});
 
         }
 
@@ -68,7 +68,7 @@ namespace InventoryManager.Controllers
                 return BadRequest(new { Error = response.Error });
             }
 
-            return Ok(new {ProductTypes = response.Value});
+            return Ok(new {PropertyTypes = response.Value});
 
         }
 
@@ -87,7 +87,7 @@ namespace InventoryManager.Controllers
                 return BadRequest(new {Error = response.Error});
             }
 
-            return Ok(new {Updated_ProductType = response.Value});
+            return Ok(new {Updated_PropertyType = response.Value});
 
         }
 

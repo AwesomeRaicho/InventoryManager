@@ -23,6 +23,7 @@ builder.Services.AddScoped<IProductInstanceService, ProductInstanceService>();
 builder.Services.AddScoped<IProductTypeService, ProductTypeService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IPropertyTypeService, PropertyTypeService>();
+builder.Services.AddScoped<IPropertyInstanceService, PropertyInstanceService>();
 builder.Services.AddScoped<IProduct_PropertyService, Product_PropertyService>();
 
 
