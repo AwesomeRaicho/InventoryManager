@@ -185,6 +185,13 @@ namespace InventoryManager.Core.Services
                 return Result<ProductTypeResponse>.Failure("product type does not exist.");
             }
 
+            var dbEntityWithName = await _productTypeRepository.Find(e => e.Name == productTypePutRequest.Name);
+
+            if(dbEntityWithName != null)
+            {
+                return Result<ProductTypeResponse>.Failure("product type name already exists.");
+            }
+
             if (dbEntity.ConcurrencyStamp != null && !productTypePutRequest.ConcurrencyStamp.SequenceEqual(dbEntity.ConcurrencyStamp))
             {
                 return Result<ProductTypeResponse>.Failure("Concurrency conflict detected: The entity has been modified by another process. Please reload the latest data and retry your update.");

@@ -25,6 +25,7 @@ namespace InventoryManager.Middleware
                 await _next(httpContext);
             }catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 await _exceptionHandling.HandleAsync(httpContext, ex, env);
             }
         }

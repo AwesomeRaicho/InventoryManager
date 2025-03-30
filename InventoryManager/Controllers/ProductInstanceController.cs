@@ -134,6 +134,11 @@ namespace InventoryManager.Controllers
             return Ok(new {product_instances_by_product = response.Value});
 
         }
+
+
+
+
+
     }
 }
 

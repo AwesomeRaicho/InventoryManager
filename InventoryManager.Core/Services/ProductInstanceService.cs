@@ -263,10 +263,10 @@ namespace InventoryManager.Core.Services
             }
 
             //making sure page 1 will  be provided always
-            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber <= 1 || productInstanceGetRequest.PageNumber == null ? 0 : productInstanceGetRequest.PageNumber;
+            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber <= 1 ? 0 : productInstanceGetRequest.PageNumber;
 
             //keeping the page size between 20 and 1000
-            productInstanceGetRequest.PageSize = productInstanceGetRequest.PageSize == null ? 20 : productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 1000 ? 1000 : productInstanceGetRequest.PageSize;
+            productInstanceGetRequest.PageSize =  productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 1000 ? 1000 : productInstanceGetRequest.PageSize;
 
 
             //do Query

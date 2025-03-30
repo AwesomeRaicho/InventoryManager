@@ -160,7 +160,7 @@ namespace InventoryManager.Core.Services
 
             if (!Guid.TryParse(locationPutRequest.Id, out Guid parsedId))
             {
-
+                return Result<LocationResponse>.Failure("Location ID is not the correct format.");
             }
 
             var dbEntity = await _locationRepository.Find(e => e.Id == parsedId);
@@ -170,7 +170,15 @@ namespace InventoryManager.Core.Services
                 return Result<LocationResponse>.Failure("Location does not exist.");
             }
 
-            if(dbEntity.ConcurrencyStamp != null && !dbEntity.ConcurrencyStamp.SequenceEqual(dbEntity.ConcurrencyStamp))
+            var dbEntityWithName = await _locationRepository.Find(e => e.Name == locationPutRequest.Name);
+
+            if(dbEntityWithName != null)
+            {
+                return Result<LocationResponse>.Failure("Location name already exists.");
+            }
+
+
+            if (dbEntity.ConcurrencyStamp != null && !dbEntity.ConcurrencyStamp.SequenceEqual(dbEntity.ConcurrencyStamp))
             {   
                 return Result<LocationResponse>.Failure("Concurrency error: location may have been updated, please refresh request to obtasined the most updated version of the location data.");
             }

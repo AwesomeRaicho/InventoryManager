@@ -85,7 +85,7 @@ namespace InventoryManager.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            if(!string.IsNullOrEmpty(id))
+            if(string.IsNullOrEmpty(id))
             {
                 return BadRequest(new {Error = "Delete ID cannot be null."});
             }
@@ -138,5 +138,18 @@ namespace InventoryManager.Controllers
 
             return Ok(new {Property_Instances = response.Value});
         }
+
+
+
+        
+        [HttpGet("all-property-types-and-instances")]
+        public async Task<IActionResult> AllPropertyTypesAndInstances()
+        {
+            var resDictionary = await _propertyInstanceService.GetAllPropertyTypesWithInstances();
+
+            return Ok(new {all_properties = resDictionary });
+
+        }
+
     }
 }

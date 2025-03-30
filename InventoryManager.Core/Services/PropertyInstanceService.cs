@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using InventoryManager.Core.DTO;
@@ -98,7 +99,7 @@ namespace InventoryManager.Core.Services
 
             var dbPropertyInstance = await _propertyInstanceRepository.Find(e => e.Id == parsedId);
 
-            if(dbPropertyInstance != null)
+            if(dbPropertyInstance == null)
             {
                 return Result<bool>.Failure("Product Instance ID does not belong to an existing entity");
             }
@@ -272,6 +273,41 @@ namespace InventoryManager.Core.Services
             return Result<List<PropertyInstanceResponse>>.Success(responses);
 
         }
+
+        public async Task<Dictionary<string, List<PropertyInstanceResponse>>> GetAllPropertyTypesWithInstances()
+        {
+            Dictionary<string, List<PropertyInstanceResponse>> responseDictionary = new Dictionary<string, List<PropertyInstanceResponse>>();
+
+            var query = _propertyTypeRepository.GetQueryable();
+            query = query.OrderBy(e => e.Name);
+            var propertyTypes = await query.ToArrayAsync();
+
+            if (propertyTypes.Any())
+            {
+                foreach (var propType in propertyTypes)
+                {
+                    var key = propType.Name ?? "";
+
+                    var instancesQuery = _propertyInstanceRepository.GetQueryable()
+                        .Where(e => e.PropertyTypeId == propType.Id);
+
+                    var propertyInstances = await instancesQuery.ToListAsync();
+                    var propertyInstancesRes = propertyInstances.Select(e => new PropertyInstanceResponse()
+                    {
+                        Id = e.Id.ToString(),
+                        Name = e.Name,
+                        PropertyTypeId = e.PropertyTypeId.ToString(),
+                        ConcurrencyStamp = propType.ConcurrencyStamp,
+                        PropertyTypeName = propType.Name,
+                    }).ToList();
+
+                    responseDictionary.Add(key, propertyInstancesRes);
+                }
+            }
+
+            return responseDictionary;
+        }
+
     }
 }
 
