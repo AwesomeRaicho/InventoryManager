@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using InventoryManager.Core.Models;
 using InventoryManager.Core.DTO;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace InventoryManager.Core.Services
@@ -114,9 +116,73 @@ namespace InventoryManager.Core.Services
 
 
 
-        public Task<bool> Delete(string productId, List<string> propertyInstanceIds)
+        public async Task<bool> DeleteRange(string productId, List<string?> propertyInstanceIds)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(productId))
+                return false;
+
+            var productGuid = Guid.Parse(productId);
+            var dbEntities = await _product_PropertyRespository
+                .GetQueryable()
+                .Where(e => e.ProductId == productGuid)
+                .ToListAsync();
+
+            if (!dbEntities.Any())
+                return false;
+
+            var removeList = dbEntities
+                .Where(entity => !propertyInstanceIds.Contains(entity.PropertyId.ToString()))
+                .ToList();
+
+            if (removeList.Any())
+                await _product_PropertyRespository.RemoveRange(removeList);
+
+            return true;
         }
+        public async Task<bool> CreateRange(string productId, List<string> propertyInstanceIds)
+        {
+            if (string.IsNullOrEmpty(productId))
+            {
+                return false;
+            }
+
+            var query = _product_PropertyRespository.GetQueryable();
+
+            var dbEntities = await query.Where(e => e.ProductId == Guid.Parse(productId)).ToListAsync();
+            
+            var addList = new List<Product_Property>();
+
+            if (!dbEntities.Any())
+            {
+                foreach( var property in propertyInstanceIds)
+                {
+                    var newEntity = new Product_Property()
+                    {
+                        ProductId = Guid.Parse(productId),
+                        PropertyId = Guid.Parse(property),
+                    };
+
+                    addList.Add(newEntity);
+                }
+
+                await _product_PropertyRespository.AddRange(addList);
+
+                return true;
+            }
+
+
+            foreach (var entity in dbEntities)
+            {
+                if (!propertyInstanceIds.Contains(entity.PropertyId.ToString()))
+                {
+                    addList.Add(entity);
+                }
+            }
+
+            await _product_PropertyRespository.RemoveRange(addList);
+
+            return true;
+        }
+
     }
 }

@@ -19,8 +19,10 @@ namespace InventoryManager.Core.Interfaces
 
         public Task<Result<List<PropertyInstanceResponse>>> GetAllPropertyInstance(PropertyInstanceGetRequest propertyInstanceGetRequest);
 
-        public Task<Result<List<PropertyInstanceResponse>>> GetPropertyInstancesByProductTypeId(PropertyInstanceGetRequest propertyInstanceGetRequest);
+        public Task<Result<List<PropertyInstanceResponse>>> GetPropertyInstancesByPropertyTypeId(PropertyInstanceGetRequest propertyInstanceGetRequest);
 
-        public Task<Dictionary<string, List<PropertyInstanceResponse>>> GetAllPropertyTypesWithInstances();
+        public Task<Result<Dictionary<string, List<PropertyInstanceResponse>>>> GetAllPropertyTypesWithInstances();
+
+        public Task<Result<List<PropertyInstanceResponse>>> GetAllPropertyInstancesByProductId(string ProductId);
     }
 }

@@ -120,24 +120,24 @@ namespace InventoryManager.Controllers
 
         }
 
-        [HttpGet("by-property-type")]
-        public async Task<IActionResult> GetByPropertyTypeId([FromQuery] PropertyInstanceGetRequest propertyInstanceGetRequest)
-        {
-            if (propertyInstanceGetRequest == null)
-            {
-                return BadRequest(new { Error = "Property request cannot be null." });
-            }
+        //[HttpGet("by-property-type")]
+        //public async Task<IActionResult> GetByPropertyTypeId([FromQuery] PropertyInstanceGetRequest propertyInstanceGetRequest)
+        //{
+        //    if (propertyInstanceGetRequest == null)
+        //    {
+        //        return BadRequest(new { Error = "Property request cannot be null." });
+        //    }
 
-            var response = await _propertyInstanceService.GetPropertyInstancesByProductTypeId(propertyInstanceGetRequest);
+        //    var response = await _propertyInstanceService.GetPropertyInstancesByProductTypeId(propertyInstanceGetRequest);
 
-            if (!response.IsSuccess)
-            {
-                return BadRequest(new { Error = response.Error });
+        //    if (!response.IsSuccess)
+        //    {
+        //        return BadRequest(new { Error = response.Error });
 
-            }
+        //    }
 
-            return Ok(new {Property_Instances = response.Value});
-        }
+        //    return Ok(new {Property_Instances = response.Value});
+        //}
 
 
 
@@ -147,7 +147,16 @@ namespace InventoryManager.Controllers
         {
             var resDictionary = await _propertyInstanceService.GetAllPropertyTypesWithInstances();
 
-            return Ok(new {all_properties = resDictionary });
+            if(resDictionary.IsSuccess)
+            {
+                return Ok(new {all_properties = resDictionary });
+
+            }else
+            {
+                return BadRequest(new {error = resDictionary.Error});
+            }
+
+
 
         }
 

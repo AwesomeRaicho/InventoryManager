@@ -19,12 +19,14 @@ namespace InventoryManager.Core.Services
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<ProductType> _productTypeRepository;
         private readonly IProduct_PropertyService _productPropertyService;
+        private readonly IPropertyInstanceService _propertyInstanceService;
 
-        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService)
+        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService, IPropertyInstanceService propertyInstanceService)
         {
             _productRepository = productRepository;
             _productTypeRepository = productTypeRepository;
             _productPropertyService = productPropertyService;
+            _propertyInstanceService = propertyInstanceService;
         }
 
         /// <summary>
@@ -38,7 +40,7 @@ namespace InventoryManager.Core.Services
 
             return new ProductResponse()
             {
-                Id = product.Id,
+                Id = product.Id.ToString(),
                 ConcurrencyStamp = product.ConcurrencyStamp,
                 Price = product.Price,
                 ProductName = product.ProductName,
@@ -121,7 +123,7 @@ namespace InventoryManager.Core.Services
 
             return products.Select(p => new ProductResponse()
             {
-                Id = p.Id,
+                Id = p.Id.ToString(),
                 Price = p.Price,
                 ProductName = p.ProductName,
                 ProductNumber = p.ProductNumber,
@@ -231,12 +233,54 @@ namespace InventoryManager.Core.Services
                 parsedTypeId = parsedProductType;
             }
 
+
             // Update product details
             dbProduct.ProductNumber = productPutRequest.ProductNumber;
             dbProduct.ProductName = productPutRequest.ProductName;
             dbProduct.ConcurrencyStamp = productPutRequest.ConcurrencyStamp;
             dbProduct.ProductTypeId = parsedTypeId;
             dbProduct.Price = productPutRequest.Price;
+
+            //update properties
+            var props = await _propertyInstanceService.GetAllPropertyInstancesByProductId(dbProduct.Id.ToString());
+            if(productPutRequest.PropertyIds != null && productPutRequest.PropertyIds.Count > 0)
+            {
+                var dbIds = new List<string?>();
+                if (props.Value != null)
+                {
+                    dbIds = props.Value.Where(e => e.Id != null).Select(e =>  e.Id).ToList();
+                }
+
+
+                var removeList = dbIds.Where(e => e != null && !productPutRequest.PropertyIds.Contains(e)).ToList();
+                
+                var addList = productPutRequest.PropertyIds.Where(e => !dbIds.Contains(e)).ToList();
+
+                if(removeList != null && removeList.Count > 0 )
+                {
+                    await _productPropertyService.DeleteRange(productPutRequest.Id, removeList);
+
+                }
+
+                if(addList != null  && addList.Count > 0 )
+                {
+                    await _productPropertyService.CreateRange(productPutRequest.Id, addList);
+
+                }
+            }else if(props.IsSuccess && props.Value != null && props.Value.Count > 0)
+            {
+                var removeList = props.Value.Select(e => e.Id).ToList();
+                if (removeList != null && removeList.Count > 0)
+                {
+                    await _productPropertyService.DeleteRange(productPutRequest.Id, removeList);
+
+                }
+            }
+            
+
+            
+
+            
 
             var updateResult = await _productRepository.Update(dbProduct);
             if (updateResult == null)
@@ -310,7 +354,7 @@ namespace InventoryManager.Core.Services
 
             var response = productList.Select(e => new ProductResponse()
             {
-                Id = e.Id,
+                Id = e.Id.ToString(),
                 ProductName = e.ProductName,
                 ConcurrencyStamp = e.ConcurrencyStamp,
                 Price = e.Price,
@@ -319,6 +363,26 @@ namespace InventoryManager.Core.Services
                 StockAmount = e.StockAmount,
                 ProductTypeName = e.ProductType != null ? e.ProductType.Name : null,
             }).ToList();
+
+
+            for (int i = 0; i < response.Count; i++)
+            {
+                string? pId = response[i].Id;
+                if(pId == null)
+                {
+                    continue;
+                }
+
+                var propList = await _propertyInstanceService.GetAllPropertyInstancesByProductId(pId);
+                if(propList.IsSuccess && propList.Value != null)
+                {
+                    if(propList.Value.Any())
+                    {
+                        response[i].Properties = propList.Value;
+                    }
+                }
+            }
+
 
             return Result<List<ProductResponse>>.Success(response);
         }

@@ -12,8 +12,8 @@ namespace InventoryManager.Core.Interfaces
     {
         public Task<bool> Create(string productId, List<string> propertyInstanceIds);
 
-        public Task<bool> Delete(string productId, List<string> propertyInstanceIds);
-
         public Task<List<PropertyInstanceResponse>> GetByProductId(string productId);
+        public Task<bool> DeleteRange(string productId, List<string?> propertyInstanceIds);
+        public Task<bool> CreateRange(string productId, List<string> propertyInstanceIds);
     }
 }

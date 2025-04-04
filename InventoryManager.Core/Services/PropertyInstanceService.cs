@@ -17,12 +17,17 @@ namespace InventoryManager.Core.Services
     {
         private readonly IRepository<PropertyInstance> _propertyInstanceRepository;
         private readonly IRepository<PropertyType> _propertyTypeRepository;
+        private readonly IRepository<Product> _productRepository;
+        private readonly IRepository<Product_Property> _productPropertyRepository;
 
 
-        public PropertyInstanceService(IRepository<PropertyInstance> propertyInstancerepo, IRepository<PropertyType> propertyTypeRepo)
+
+        public PropertyInstanceService(IRepository<PropertyInstance> propertyInstancerepo, IRepository<PropertyType> propertyTypeRepo, IRepository<Product> productRepository, IRepository<Product_Property> productPropertyRepository)
         {
             _propertyInstanceRepository = propertyInstancerepo;
             _propertyTypeRepository = propertyTypeRepo;
+            _productRepository = productRepository;
+            _productPropertyRepository = productPropertyRepository;
         }
 
         private PropertyInstanceResponse GetPropertyInstanceResponse(PropertyInstance propertyIntance)
@@ -221,7 +226,7 @@ namespace InventoryManager.Core.Services
 
         }
 
-        public async Task<Result<List<PropertyInstanceResponse>>> GetPropertyInstancesByProductTypeId(PropertyInstanceGetRequest propertyInstanceGetRequest)
+        public async Task<Result<List<PropertyInstanceResponse>>> GetPropertyInstancesByPropertyTypeId(PropertyInstanceGetRequest propertyInstanceGetRequest)
         {
             if(propertyInstanceGetRequest == null)
             {
@@ -274,7 +279,7 @@ namespace InventoryManager.Core.Services
 
         }
 
-        public async Task<Dictionary<string, List<PropertyInstanceResponse>>> GetAllPropertyTypesWithInstances()
+        public async Task<Result<Dictionary<string, List<PropertyInstanceResponse>>>> GetAllPropertyTypesWithInstances()
         {
             Dictionary<string, List<PropertyInstanceResponse>> responseDictionary = new Dictionary<string, List<PropertyInstanceResponse>>();
 
@@ -305,7 +310,43 @@ namespace InventoryManager.Core.Services
                 }
             }
 
-            return responseDictionary;
+            return Result<Dictionary<string, List<PropertyInstanceResponse>>>.Success(responseDictionary);
+        }
+
+        public async Task<Result<List<PropertyInstanceResponse>>> GetAllPropertyInstancesByProductId(string ProductId)
+        {
+            if (string.IsNullOrEmpty(ProductId))
+            {
+                return Result<List<PropertyInstanceResponse>>.Failure("ProductId cannot be null.");
+            }
+
+            if(!Guid.TryParse(ProductId, out Guid parsedProductId))
+            {
+                return Result<List<PropertyInstanceResponse>>.Failure("ProductId is not the correct formast.");
+            }
+
+            var dbProduct = await _productRepository.Find(e => e.Id == parsedProductId);
+
+            if(dbProduct == null)
+            {
+                return Result<List<PropertyInstanceResponse>>.Failure("ProductId does not belong to an existing product.");
+            }
+
+            //all propertyintances that have the productId
+            var query = _productPropertyRepository.GetQueryable();
+
+            var dbProperties = await query.Where(e => e.ProductId == parsedProductId).Select(e => new PropertyInstanceResponse
+            {
+                Name = e.Property != null ? e.Property.Name : null,
+                Id = e.Property != null ? e.Property.Id.ToString() : null,
+                ConcurrencyStamp = e.Property != null ? e.Property.ConcurrencyStamp : null,
+                PropertyTypeId = e.Property != null ? e.Property.PropertyTypeId.ToString() : null,
+                PropertyTypeName = e.Property != null && e.Property.PropertyType != null ? e.Property.PropertyType.Name : null,
+            }).ToListAsync();
+
+            return Result<List<PropertyInstanceResponse>>.Success(dbProperties);
+
+
         }
 
     }

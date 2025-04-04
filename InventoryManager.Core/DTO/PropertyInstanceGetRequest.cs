@@ -11,6 +11,8 @@ namespace InventoryManager.Core.DTO
     {
         public string? SearchText { get; set; }
         public string? PropertyTypeId { get; set; }
+        public string? ProductTypeId { get; set; }
+
         //pagination
 
         public int PageIndex { get; set; } = 0;

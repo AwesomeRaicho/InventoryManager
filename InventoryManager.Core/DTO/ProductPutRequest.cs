@@ -20,5 +20,7 @@ namespace InventoryManager.Core.DTO
 
         // Foreign Keys
         public string? ProductTypeId { get; set; }
+        public List<string>? PropertyIds { get; set; }
+
     }
 }
