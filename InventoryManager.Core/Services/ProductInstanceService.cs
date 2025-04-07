@@ -24,15 +24,17 @@ namespace InventoryManager.Core.Services
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<Location> _locationRepository;
         private readonly IRepository<Product_Property> _productInstance_PropertyRepository;
-        private readonly IRepository<PropertyInstance> _propertyInstanceRepository; 
+        private readonly IRepository<PropertyInstance> _propertyInstanceRepository;
+        private readonly IProductService _productService;
 
-        public ProductInstanceService(IRepository<ProductInstance> productInstanceRepo, IRepository<Product> productRepo, IRepository<Location> locationRepo, IRepository<Product_Property> product_PropertyRepository, IRepository<PropertyInstance> PropertyInstanceRepo)
+        public ProductInstanceService(IRepository<ProductInstance> productInstanceRepo, IRepository<Product> productRepo, IRepository<Location> locationRepo, IRepository<Product_Property> product_PropertyRepository, IRepository<PropertyInstance> PropertyInstanceRepo, IProductService productService)
         {
             _productInstanceRepository = productInstanceRepo;
             _productRepository = productRepo;
             _locationRepository = locationRepo;
             _productInstance_PropertyRepository = product_PropertyRepository;
             _propertyInstanceRepository = PropertyInstanceRepo;
+            _productService = productService;
         }
 
         private ProductInstanceResponse? GetResponseDTO(ProductInstance productinstance)
@@ -192,6 +194,8 @@ namespace InventoryManager.Core.Services
             {
                 await this.AddPropertiesToInstance(dbEntity, productInstanceCreateRequest.PropertyIds);
             }
+
+            await _productService.AddToStock(dbEntity.ProductId.ToString());
 
             var resDTO = this.GetResponseDTO(dbEntity);
 
@@ -436,7 +440,9 @@ namespace InventoryManager.Core.Services
             {
                 return Result<ProductInstanceResponse>.Failure("Id provided does not belong to an existing product");
             }
+            await _productService.SubtrackToStock(entity.ProductId.ToString());
 
+            
             var isDeleted = await _productInstanceRepository.Delete(id);
 
             return isDeleted ?
@@ -486,7 +492,7 @@ namespace InventoryManager.Core.Services
 
             query = query.Where(e => e.ProductId == parsedProductId);
 
-            var dbList = await query.Skip(productInstanceGetRequest.PageSize * productInstanceGetRequest.PageNumber).Take(productInstanceGetRequest.PageSize).ToListAsync();
+            var dbList = await query.Skip(productInstanceGetRequest.PageSize * productInstanceGetRequest.PageNumber).Take(productInstanceGetRequest.PageSize).Include(e => e.Location).ToListAsync(); 
 
 
             

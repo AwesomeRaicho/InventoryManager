@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
 
 namespace InventoryManager.Core.Services
 {
@@ -385,6 +386,49 @@ namespace InventoryManager.Core.Services
 
 
             return Result<List<ProductResponse>>.Success(response);
+        }
+
+        public async Task<bool> AddToStock(string? productId)
+        {
+            if(string.IsNullOrEmpty(productId))
+            {
+                return false;
+            }
+
+            var dbProduct = await _productRepository.Find(e => e.Id == Guid.Parse(productId));
+
+            if(dbProduct == null)
+            {
+                return false;
+            }
+
+            dbProduct.StockAmount++;
+
+            await _productRepository.Update(dbProduct);
+            return true;
+
+        }
+        public async Task<bool> SubtrackToStock(string? productId)
+        {
+            if (string.IsNullOrEmpty(productId))
+            {
+                return false;
+            }
+
+            var dbProduct = await _productRepository.GetEntityById(productId);
+
+            if (dbProduct == null)
+            {
+                return false;
+            }
+
+            if (dbProduct.StockAmount > 0)
+            {
+                dbProduct.StockAmount--;
+            }
+
+            await _productRepository.Update(dbProduct);
+            return true;
         }
 
     }

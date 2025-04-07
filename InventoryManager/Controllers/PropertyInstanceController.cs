@@ -120,28 +120,28 @@ namespace InventoryManager.Controllers
 
         }
 
-        //[HttpGet("by-property-type")]
-        //public async Task<IActionResult> GetByPropertyTypeId([FromQuery] PropertyInstanceGetRequest propertyInstanceGetRequest)
-        //{
-        //    if (propertyInstanceGetRequest == null)
-        //    {
-        //        return BadRequest(new { Error = "Property request cannot be null." });
-        //    }
+        [HttpGet("by-property-type")]
+        public async Task<IActionResult> GetByPropertyTypeId([FromQuery] PropertyInstanceGetRequest propertyInstanceGetRequest)
+        {
+            if (propertyInstanceGetRequest == null)
+            {
+                return BadRequest(new { Error = "Property request cannot be null." });
+            }
 
-        //    var response = await _propertyInstanceService.GetPropertyInstancesByProductTypeId(propertyInstanceGetRequest);
+            var response = await _propertyInstanceService.GetPropertyInstancesByPropertyTypeId(propertyInstanceGetRequest);
 
-        //    if (!response.IsSuccess)
-        //    {
-        //        return BadRequest(new { Error = response.Error });
+            if (!response.IsSuccess)
+            {
+                return BadRequest(new { Error = response.Error });
 
-        //    }
+            }
 
-        //    return Ok(new {Property_Instances = response.Value});
-        //}
+            return Ok(new { Property_Instances = response.Value });
+        }
 
 
 
-        
+
         [HttpGet("all-property-types-and-instances")]
         public async Task<IActionResult> AllPropertyTypesAndInstances()
         {

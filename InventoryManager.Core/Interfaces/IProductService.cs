@@ -17,5 +17,8 @@ namespace InventoryManager.Core.Interfaces
         public Task<Result<ProductResponse>> UpdateProduct(ProductPutRequest productPutRequest);
         public Task<Result<bool>> DeleteProduct(string id);
         public Task<Result<List<ProductResponse>>> GetAllByProductTypeId(ProductGetRequest productGetRequest);
+        public Task<bool> AddToStock(string? productId);
+        public Task<bool> SubtrackToStock(string? productId);
+
     }
 }
