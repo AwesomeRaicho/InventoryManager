@@ -21,13 +21,15 @@ namespace InventoryManager.Core.Services
         private readonly IRepository<ProductType> _productTypeRepository;
         private readonly IProduct_PropertyService _productPropertyService;
         private readonly IPropertyInstanceService _propertyInstanceService;
+        private readonly IRepository<ProductInstance> _productInstanceRepository;
 
-        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService, IPropertyInstanceService propertyInstanceService)
+        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService, IPropertyInstanceService propertyInstanceService, IRepository<ProductInstance> productInstanceRepository)
         {
             _productRepository = productRepository;
             _productTypeRepository = productTypeRepository;
             _productPropertyService = productPropertyService;
             _propertyInstanceService = propertyInstanceService;
+            _productInstanceRepository = productInstanceRepository;
         }
 
         /// <summary>
@@ -314,6 +316,13 @@ namespace InventoryManager.Core.Services
                 return Result<bool>.Failure("Id does not exist.");
 
             }
+
+
+            var query = _productInstanceRepository.GetQueryable();
+
+            var dbList = await query.Where(e => e.ProductId == productId).ToListAsync();
+
+            await _productInstanceRepository.RemoveRange(dbList);
 
             await _productRepository.Delete(id);
 
