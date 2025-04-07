@@ -52,6 +52,7 @@ namespace InventoryManager.Core.Services
                 ProductId = productinstance.ProductId.ToString(),
                 ProductName = productinstance.Product != null ? productinstance.Product.ProductName : null,
                 EntryDate = productinstance.EntryDate,
+                PurchasePrice = productinstance.PurchasePrice,
             };
 
             return reponse;
