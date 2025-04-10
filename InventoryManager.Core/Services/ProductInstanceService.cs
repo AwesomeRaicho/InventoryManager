@@ -491,7 +491,7 @@ namespace InventoryManager.Core.Services
                 query = query.OrderByDescending(e => e.Location);
             }
 
-            query = query.Where(e => e.ProductId == parsedProductId);
+            query = query.Where(e => e.ProductId == parsedProductId && e.Status != "Sold");
 
             var dbList = await query.Skip(productInstanceGetRequest.PageSize * productInstanceGetRequest.PageNumber).Take(productInstanceGetRequest.PageSize).Include(e => e.Location).ToListAsync(); 
 
@@ -516,6 +516,79 @@ namespace InventoryManager.Core.Services
                 LocationName = e.Location != null ?  e.Location.Name : null,
                 ProductId = e.ProductId.ToString(),
                 ProductName = e.Product != null ? e.Product.ProductName : null,
+                PurchasePrice = e.PurchasePrice,
+            }).ToList();
+
+            return Result<List<ProductInstanceResponse>>.Success(response);
+
+        }
+
+        public async Task<Result<List<ProductInstanceResponse>>> GetSoldByProductId(ProductInstanceGetRequest productInstanceGetRequest)
+        {
+            if (productInstanceGetRequest == null)
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Get request cannot be null.");
+            }
+
+            if (string.IsNullOrEmpty(productInstanceGetRequest.ProductId))
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Product Id cannot be null.");
+            }
+
+            if (!Guid.TryParse(productInstanceGetRequest.ProductId, out Guid parsedProductId))
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Product Id is not the correc format.");
+            }
+
+            var dbProduct = await _productRepository.Find(e => e.Id == parsedProductId);
+
+            if (dbProduct == null)
+            {
+                return Result<List<ProductInstanceResponse>>.Failure("Product Id does not exist.");
+            }
+
+            productInstanceGetRequest.PageNumber = productInstanceGetRequest.PageNumber < 0 ? 0 : productInstanceGetRequest.PageNumber;
+
+            productInstanceGetRequest.PageSize = productInstanceGetRequest.PageSize < 20 ? 20 : productInstanceGetRequest.PageSize > 100 ? 100 : productInstanceGetRequest.PageSize;
+
+            var query = _productInstanceRepository.GetQueryable();
+
+            if (productInstanceGetRequest.OrderBy == OrderBy.Asc)
+            {
+                query = query.OrderBy(e => e.Location);
+            }
+            else
+            {
+                query = query.OrderByDescending(e => e.Location);
+            }
+
+            query = query.Where(e => e.ProductId == parsedProductId && e.Status == "Sold");
+
+            var dbList = await query.Skip(productInstanceGetRequest.PageSize * productInstanceGetRequest.PageNumber).Take(productInstanceGetRequest.PageSize).Include(e => e.Location).ToListAsync();
+
+
+
+            if (!dbList.Any())
+            {
+                return Result<List<ProductInstanceResponse>>.Success(new List<ProductInstanceResponse>());
+            }
+
+
+
+
+            var response = dbList.Select(e => new ProductInstanceResponse()
+            {
+                Barcode = e.Barcode,
+                Id = e.Id.ToString(),
+                EntryDate = e.EntryDate,
+                LocationId = e.LocationId.ToString(),
+                Status = e.Status,
+                ConcurrencyStamp = e.ConcurrencyStamp,
+                LocationName = e.Location != null ? e.Location.Name : null,
+                ProductId = e.ProductId.ToString(),
+                ProductName = e.Product != null ? e.Product.ProductName : null,
+                PurchasePrice = e.PurchasePrice,
+                SoldBy = e.SoldBy,
             }).ToList();
 
             return Result<List<ProductInstanceResponse>>.Success(response);

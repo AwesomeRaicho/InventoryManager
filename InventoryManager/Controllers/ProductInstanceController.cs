@@ -135,7 +135,25 @@ namespace InventoryManager.Controllers
 
         }
 
+        [HttpGet("by-product-sold")]
+        public async Task<IActionResult> ByProductSold([FromQuery] ProductInstanceGetRequest productInstanceGetRequest)
+        {
+            if (productInstanceGetRequest == null)
+            {
+                return BadRequest(new { Error = "Get request cannot be null." });
+            }
 
+            var response = await _productInstanceService.GetSoldByProductId(productInstanceGetRequest);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(new { Error = response.Error });
+            }
+
+
+            return Ok(new { product_instances_by_product = response.Value });
+
+        }
 
 
 

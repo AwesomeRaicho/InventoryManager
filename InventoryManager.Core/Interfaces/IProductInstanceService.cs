@@ -22,6 +22,8 @@ namespace InventoryManager.Core.Interfaces
 
         
         public Task<Result<List<ProductInstanceResponse>>> GetByProductId(ProductInstanceGetRequest propertyInstanceGetRequest);
+
+        public Task<Result<List<ProductInstanceResponse>>> GetSoldByProductId(ProductInstanceGetRequest productInstanceGetRequest);
     }
 }
 

@@ -17,7 +17,7 @@ namespace InventoryManager.Core.DTO
         public string? ProductName { get; set; }
         public string? Status { get; set; }
         public decimal? PurchasePrice { get; set; }
-
+        public string? SoldBy { get; set; }
 
         public DateTime? EntryDate { get; set; }
 

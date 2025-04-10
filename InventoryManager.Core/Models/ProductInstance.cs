@@ -16,7 +16,7 @@ namespace InventoryManager.Core.Models
         public DateTime? SellDate { get; set; }
         public string? Status { get; set; }
         public byte[]? ConcurrencyStamp { get; set; }
-
+        public string? SoldBy { get; set; }
 
         // Foreign Keys
         public Guid? LocationId { get; set; } // FK for Location
