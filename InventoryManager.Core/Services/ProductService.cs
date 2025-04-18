@@ -17,16 +17,21 @@ namespace InventoryManager.Core.Services
 {
     public class ProductService : IProductService
     {
+        //repos
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<ProductType> _productTypeRepository;
+        private readonly IRepository<ProductInstance> _productInstanceRepository;
+        private readonly IRepository<Product_Property> _product_PropertyRespository;
+        
+        //services
         private readonly IProduct_PropertyService _productPropertyService;
         private readonly IPropertyInstanceService _propertyInstanceService;
-        private readonly IRepository<ProductInstance> _productInstanceRepository;
 
-        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService, IPropertyInstanceService propertyInstanceService, IRepository<ProductInstance> productInstanceRepository)
+        public ProductService(IRepository<Product> productRepository, IRepository<ProductType> productTypeRepository, IProduct_PropertyService productPropertyService, IPropertyInstanceService propertyInstanceService, IRepository<ProductInstance> productInstanceRepository, IRepository<Product_Property> product_PropertyRespository)
         {
             _productRepository = productRepository;
             _productTypeRepository = productTypeRepository;
+            _product_PropertyRespository = product_PropertyRespository;
             _productPropertyService = productPropertyService;
             _propertyInstanceService = propertyInstanceService;
             _productInstanceRepository = productInstanceRepository;
@@ -304,7 +309,7 @@ namespace InventoryManager.Core.Services
                 return Result<bool>.Failure("Id cannot be null");
             }
 
-            if(!Guid.TryParse(id, out var productId))
+            if(!Guid.TryParse(id, out var parsedProductId))
             {
                 return Result<bool>.Failure("Id provided is incorrect format.");
             }
@@ -314,15 +319,29 @@ namespace InventoryManager.Core.Services
             if (response == null)
             {
                 return Result<bool>.Failure("Id does not exist.");
-
             }
 
 
-            var query = _productInstanceRepository.GetQueryable();
 
-            var dbList = await query.Where(e => e.ProductId == productId).ToListAsync();
+            //need to make sure you remover the properties
 
-            await _productInstanceRepository.RemoveRange(dbList);
+            var queryProductProperties = _product_PropertyRespository.GetQueryable();
+            
+            var dbListProductProperties = await queryProductProperties.Where(e => e.ProductId == parsedProductId).ToListAsync();
+
+            await _product_PropertyRespository.RemoveRange(dbListProductProperties);
+
+
+
+            //remove product instances that belonged to the product
+
+            //get list of intances
+            var dbInstancesList = await _productInstanceRepository.GetQueryable().Where(e => e.ProductId == parsedProductId).ToListAsync();
+
+            if (dbInstancesList.Count > 0)
+            {
+                await _productInstanceRepository.RemoveRange(dbInstancesList);
+            }
 
             await _productRepository.Delete(id);
 

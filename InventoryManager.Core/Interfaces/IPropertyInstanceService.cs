@@ -1,4 +1,5 @@
 ﻿using InventoryManager.Core.DTO;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,5 +25,6 @@ namespace InventoryManager.Core.Interfaces
         public Task<Result<Dictionary<string, List<PropertyInstanceResponse>>>> GetAllPropertyTypesWithInstances();
 
         public Task<Result<List<PropertyInstanceResponse>>> GetAllPropertyInstancesByProductId(string ProductId);
+
     }
 }

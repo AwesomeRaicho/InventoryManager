@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Collections;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks.Sources;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 
 namespace InventoryManager.Core.Services
@@ -19,11 +22,16 @@ namespace InventoryManager.Core.Services
     {
 
         private readonly IRepository<ProductType> _productTypeRepository;
+        private readonly IRepository<Product> _productRepository;
+        private readonly IRepository<ProductInstance> _productInstanceRepository;
+        private readonly IRepository<Product_Property> _product_PropertyRepository;
 
-
-        public ProductTypeService(IRepository<ProductType> productTypeRepository)
+        public ProductTypeService(IRepository<ProductType> productTypeRepository, IRepository<Product> productRepository, IRepository<Product_Property> product_PropertyRepository, IRepository<ProductInstance> productInstanceRepository)
         {
             _productTypeRepository = productTypeRepository;
+            _productRepository = productRepository;
+            _product_PropertyRepository = product_PropertyRepository;
+            _productInstanceRepository = productInstanceRepository;
         }
 
 
@@ -235,10 +243,76 @@ namespace InventoryManager.Core.Services
                 return Result<bool>.Failure($"ProductType does not exist.");
             }
 
+            
+            // delete all product instances
+            await CascadeDeleteAllProducts(id);
+
             await _productTypeRepository.Delete(id);
 
             return Result<bool>.Success(true);
 
+        }
+
+        private async Task CascadeDeleteAllProducts(string productTypeId)
+        {
+
+            if (string.IsNullOrEmpty(productTypeId))
+            {
+                return;
+            }
+
+            if (!Guid.TryParse(productTypeId, out var parsedProductTypeId))
+            {
+                return;
+            }
+
+            var dbproductType = await _productTypeRepository.GetEntityById(productTypeId);
+
+            if (dbproductType == null)
+            {
+                return;
+            }
+
+            //get list of products in type
+            var productsQuery = _productRepository.GetQueryable();
+            var dbProductList = await productsQuery.Where(e => e.ProductTypeId == parsedProductTypeId).ToListAsync();
+
+            if(dbProductList.Any())
+            {
+                List<Product> productRangeToRemove = new List<Product>();
+                List<Product_Property> productPropertiesToRemove = new List<Product_Property>();
+                List<ProductInstance> productInstancesToRemove = new List<ProductInstance>();
+
+                foreach(var product in dbProductList)
+                {
+
+                    //Get properties
+                    var queryProductProperties = _product_PropertyRepository.GetQueryable();
+                    var dbProductProperties = await queryProductProperties.Where(e => e.ProductId == product.Id).ToListAsync();
+
+                    if(queryProductProperties.Any())
+                    {
+                        productPropertiesToRemove.AddRange(dbProductProperties);
+                    }
+
+                    //Get productInstances and add them to the remove list 
+                    var queryProductInstances = _productInstanceRepository.GetQueryable();
+                    var dbProductInstances = await queryProductInstances.Where(e => e.ProductId == product.Id).ToListAsync();
+
+                    if(dbProductInstances.Any())
+                    {
+                        productInstancesToRemove.AddRange(dbProductInstances);
+                    }
+
+                }
+
+                await _productInstanceRepository.RemoveRange(productInstancesToRemove);
+                await _product_PropertyRepository.RemoveRange(productPropertiesToRemove);
+                await _productRepository.RemoveRange(dbProductList);
+
+            }
+
+            return;
         }
 
     }

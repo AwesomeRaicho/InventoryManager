@@ -592,7 +592,11 @@ namespace InventoryManager.Core.Services
             }).ToList();
 
             return Result<List<ProductInstanceResponse>>.Success(response);
-
         }
+
+
+
+
+
     }
 }
