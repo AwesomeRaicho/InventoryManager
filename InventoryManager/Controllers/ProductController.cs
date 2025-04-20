@@ -65,7 +65,7 @@ namespace InventoryManager.Controllers
 
             var response = await _productService.CreateProduct(productRequest);
 
-            if(!response.IsSuccess)
+            if (!response.IsSuccess)
             {
                 return BadRequest(new {Error = response.Error});
             }

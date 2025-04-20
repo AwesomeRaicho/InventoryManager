@@ -37,11 +37,6 @@ namespace InventoryManager.Core.Services
             _productInstanceRepository = productInstanceRepository;
         }
 
-        /// <summary>
-        /// Turn Product entity into ProductResponse DTO
-        /// </summary>
-        /// <param name="product">Product entity</param>
-        /// <returns></returns>
         public ProductResponse GetProductResponse(Product product)
         {
             
