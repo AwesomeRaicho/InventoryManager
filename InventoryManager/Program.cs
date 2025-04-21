@@ -4,10 +4,13 @@ using InventoryManager.Core.Models.Identity;
 using InventoryManager.Core.Services;
 using InventoryManager.Infrastructure.DataAccess;
 using InventoryManager.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +27,8 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IPropertyTypeService, PropertyTypeService>();
 builder.Services.AddScoped<IPropertyInstanceService, PropertyInstanceService>();
 builder.Services.AddScoped<IProduct_PropertyService, Product_PropertyService>();
-
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IUsersService, UsersService>();
 
 
 builder.Services.AddDbContext<EntityDbContext>(options =>
@@ -53,6 +57,28 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://127.0.0.1:5500").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
+
+//Jwt 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    var config = builder.Configuration;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = config["Jwt:Issuer"],
+        ValidAudience = config["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"] ?? ""))
+    };
+});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
