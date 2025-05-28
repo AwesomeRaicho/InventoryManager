@@ -25,6 +25,8 @@ namespace InventoryManager.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] TokenRequest request)
         {
+
+
             
             if(request == null)
             {
@@ -42,6 +44,9 @@ namespace InventoryManager.Controllers
                 if (!string.IsNullOrEmpty(usernName) && !string.IsNullOrEmpty(userId) && roles != null)
                 {
                     var token = _jwtService.GenerateTokenAsync(userId, usernName, roles);
+
+                    //SAVE REFRESH TOKEN IN USER
+                    await _usersService.UpdateRefreshToken(userId, token.RefreshToken!);
 
                     return Ok(token);
 
@@ -63,13 +68,28 @@ namespace InventoryManager.Controllers
         {
 
             var principal = _jwtService.GetPrincipalFromExpiredToken(expiredToken.AccessToken!);
+
             if (principal == null)
                 return BadRequest("Invalid token");
+
+
 
             var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var username = principal.Identity?.Name;
             var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value);
 
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(expiredToken.RefreshToken))
+            {
+                return Unauthorized();
+            }
+
+            //CHECK IF REFRESH TOKEN IS STILL VALID
+            var validRefreshToken = _usersService.ValidateActiveRefreshToken(userId, expiredToken.RefreshToken);
+
+            if(!validRefreshToken.IsSuccess)
+            {
+                return Unauthorized();
+            }
 
             var token = _jwtService.GenerateTokenAsync(userId!, username!, roles);
             return Ok(token);

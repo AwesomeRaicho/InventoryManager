@@ -177,5 +177,78 @@ namespace InventoryManager.Core.Services
             }
 
         }
+
+        public async Task<Result<bool>> UpdateRefreshToken(string userId, string refreshToken)
+        {
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result<bool>.Failure("Invalid user id format.");
+            }
+            var user = _userManager.Users.FirstOrDefault(u => u.Id == userGuid);
+
+            if( user == null )
+            {
+                return Result<bool>.Failure("Could not find user with provided user id.");
+            }
+
+            user.CurrentRefreshToken = refreshToken;
+
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(2);
+
+            await _userManager.UpdateAsync(user);
+
+            return Result<bool>.Success(true);
+
+        }
+
+        public async Task<Result<bool>> RemoveRefreshToken(string userId)
+        {
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result<bool>.Failure("Invalid user id format.");
+            }
+            var user = _userManager.Users.FirstOrDefault(u => u.Id == userGuid);
+
+            if (user == null)
+            {
+                return Result<bool>.Failure("Could not find user with provided user id.");
+            }
+
+            user.CurrentRefreshToken = null;
+
+            user.RefreshTokenExpiresAt = null;
+
+            await _userManager.UpdateAsync(user);
+
+            return Result<bool>.Success(true);
+        }
+
+        public Result<bool> ValidateActiveRefreshToken(string userId, string refreshToken)
+        {
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result<bool>.Failure("Invalid user id format.");
+            }
+
+            var user = _userManager.Users.FirstOrDefault(u => u.Id == userGuid && u.CurrentRefreshToken == refreshToken);
+
+            if (user == null)
+            {
+                return Result<bool>.Failure("No matching refresh token found.");
+            }
+
+            if (user.RefreshTokenExpiresAt == null)
+            {
+                return Result<bool>.Failure("Refresh token expiration date is missing.");
+            }
+
+            if (DateTime.UtcNow >= user.RefreshTokenExpiresAt.Value)
+            {
+                return Result<bool>.Failure("Refresh token has expired.");
+            }
+
+            return Result<bool>.Success(true);
+
+        }
     }
 }

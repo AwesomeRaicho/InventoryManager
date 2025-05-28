@@ -65,6 +65,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
+
     var config = builder.Configuration;
     options.TokenValidationParameters = new TokenValidationParameters
     {
