@@ -1,12 +1,14 @@
 ﻿using InventoryManager.Core.DTO;
 using InventoryManager.Core.Interfaces;
 using InventoryManager.Core.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
 namespace InventoryManager.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PropertyInstanceController : ControllerBase

@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using InventoryManager.Core.Interfaces;
 using System.Net.WebSockets;
+using Microsoft.AspNetCore.Authorization;
 
 namespace InventoryManager.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class LocationController : ControllerBase

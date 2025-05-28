@@ -25,6 +25,7 @@ namespace InventoryManager.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] TokenRequest request)
         {
+            
             if(request == null)
             {
                 return BadRequest(new {error = "TokenRequest cannot be null."});
@@ -55,34 +56,13 @@ namespace InventoryManager.Controllers
                 return BadRequest(new { error = correctCreds.Error });
             }
 
-
-
-
-
-
-            //Mock login logic(replace with real user lookup)
-            //if (request.UserName == "admin" && request.Password == "admin123")
-            //{
-            //    var roles = new List<string> { "Admin" };
-            //    var token = _jwtService.GenerateTokenAsync("1", request.UserName, roles);
-            //    return Ok(token);
-            //}
-
-            //if (request.UserName == "employee" && request.Password == "employee123")
-            //{
-            //    var roles = new List<string> { "Employee" };
-            //    var token = _jwtService.GenerateTokenAsync("2", request.UserName, roles);
-            //    return Ok(token);
-            //}
-
-            //return Unauthorized("Invalid credentials");
-
         }
 
         [HttpPost("refresh")]
-        public IActionResult Refresh([FromBody] TokenResponse expiredToken)
+        public async Task<IActionResult> Refresh([FromBody] TokenResponse expiredToken)
         {
-            var principal = _jwtService.GetPrincipalFromExpiredToken(expiredToken.AccessToken);
+
+            var principal = _jwtService.GetPrincipalFromExpiredToken(expiredToken.AccessToken!);
             if (principal == null)
                 return BadRequest("Invalid token");
 
@@ -91,7 +71,7 @@ namespace InventoryManager.Controllers
             var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value);
 
 
-            var token = _jwtService.GenerateTokenAsync(userId ?? "", username ?? "", roles);
+            var token = _jwtService.GenerateTokenAsync(userId!, username!, roles);
             return Ok(token);
         }
 

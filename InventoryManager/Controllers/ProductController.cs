@@ -12,6 +12,7 @@ using System.Net.WebSockets;
 
 namespace InventoryManager.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase

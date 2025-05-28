@@ -9,6 +9,7 @@ namespace InventoryManager.Core.Models.Identity
 {
     public class ApplicationUser : IdentityUser<Guid>
     {
-
+        public string? CurrentRefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiresAt { get; set; }
     }
 }

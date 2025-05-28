@@ -6,7 +6,6 @@ using System.Text.Json;
 
 namespace InventoryManager.Middleware
 {
-    // You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
     public class ExceptionHandlerMiddleware
     {
         private readonly RequestDelegate _next;
