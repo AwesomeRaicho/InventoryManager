@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace InventoryManager.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ProductTypeController : ControllerBase
@@ -71,7 +71,7 @@ namespace InventoryManager.Controllers
 
             var res = await _productTypeService.GetAllProductTypes(productTypeGetRequest);
 
-            if (!res.IsSuccess)
+            if (!res.IsSuccess) 
             {
                 return BadRequest(new { Error = res.Error });
             }

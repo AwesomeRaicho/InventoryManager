@@ -21,7 +21,7 @@ namespace InventoryManager.Middleware
         {
             try
             {
-                await _next(httpContext);
+                var response =await _next(httpContext);
             }catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
